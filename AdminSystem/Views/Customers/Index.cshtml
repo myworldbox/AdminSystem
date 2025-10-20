@@ -1,0 +1,69 @@
+﻿@model IEnumerable<AdminSystem.Models.客戶資料>
+
+<h2>客戶資料管理</h2>
+
+<p>
+    @Html.ActionLink("新增客戶", "Create", null, new { @class = "btn btn-primary" })
+    @Html.ActionLink("匯出 Excel", "Export", new { search = ViewBag.Search, category = ViewBag.Category }, new { @class = "btn btn-success" })
+</p>
+
+@using (Html.BeginForm("Index", "Customers", FormMethod.Get, new { @class = "form-inline" }))
+{
+    <div class="form-group">
+        <label for="search">搜尋:</label>
+        @Html.TextBox("search", ViewBag.Search as string, new { @class = "form-control" })
+    </div>
+    <div class="form-group">
+        <label for="category">分類:</label>
+        @Html.DropDownList("category", (SelectList)ViewBag.Categories, "全部", new { @class = "form-control" })
+    </div>
+    <button type="submit" class="btn btn-default">篩選</button>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>
+                @Html.ActionLink("客戶名稱", "Index", new { sort = "客戶名稱", order = ViewBag.Order, search = ViewBag.Search, category = ViewBag.Category }, new { @class = "sortable" })
+            </th>
+            <th>
+                @Html.ActionLink("統一編號", "Index", new { sort = "統一編號", order = ViewBag.Order, search = ViewBag.Search, category = ViewBag.Category }, new { @class = "sortable" })
+            </th>
+            <th>
+                @Html.ActionLink("電話", "Index", new { sort = "電話", order = ViewBag.Order, search = ViewBag.Search, category = ViewBag.Category }, new { @class = "sortable" })
+            </th>
+            <th>
+                @Html.ActionLink("傳真", "Index", new { sort = "傳真", order = ViewBag.Order, search = ViewBag.Search, category = ViewBag.Category }, new { @class = "sortable" })
+            </th>
+            <th>
+                @Html.ActionLink("地址", "Index", new { sort = "地址", order = ViewBag.Order, search = ViewBag.Search, category = ViewBag.Category }, new { @class = "sortable" })
+            </th>
+            <th>
+                @Html.ActionLink("Email", "Index", new { sort = "Email", order = ViewBag.Order, search = ViewBag.Search, category = ViewBag.Category }, new { @class = "sortable" })
+            </th>
+            <th>
+                @Html.ActionLink("客戶分類", "Index", new { sort = "客戶分類", order = ViewBag.Order, search = ViewBag.Search, category = ViewBag.Category }, new { @class = "sortable" })
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.客戶名稱)</td>
+                <td>@Html.DisplayFor(modelItem => item.統一編號)</td>
+                <td>@Html.DisplayFor(modelItem => item.電話)</td>
+                <td>@Html.DisplayFor(modelItem => item.傳真)</td>
+                <td>@Html.DisplayFor(modelItem => item.地址)</td>
+                <td>@Html.DisplayFor(modelItem => item.Email)</td>
+                <td>@Html.DisplayFor(modelItem => item.客戶分類)</td>
+                <td>
+                    @Html.ActionLink("編輯", "Edit", new { id = item.Id }, new { @class = "btn btn-warning btn-xs" }) |
+                    @Html.ActionLink("詳細", "Details", new { id = item.Id }, new { @class = "btn btn-info btn-xs" }) |
+                    @Html.ActionLink("刪除", "Delete", new { id = item.Id }, new { @class = "btn btn-danger btn-xs", onclick = "return confirm('確定刪除?');" })
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
