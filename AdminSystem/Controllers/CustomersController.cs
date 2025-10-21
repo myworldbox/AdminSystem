@@ -29,7 +29,10 @@ namespace CustomerManagementSystem.Controllers
                 query = query.Where(c =>
                     c.客戶名稱.Contains(search) ||
                     c.統一編號.Contains(search) ||
-                    c.Email.Contains(search));
+                    c.電話.Contains(search) ||
+                    c.地址.Contains(search) ||
+                    c.Email.Contains(search) ||
+                    c.客戶分類.Contains(search));
             }
 
             if (!string.IsNullOrEmpty(category) && category != "全部")
