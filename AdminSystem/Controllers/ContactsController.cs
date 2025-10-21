@@ -1,15 +1,12 @@
 using ClosedXML.Excel;
 using AdminSystem.Models;
 using AdminSystem.Repositories;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using System;
-using System.Data.Entity.Validation;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Linq.Dynamic.Core;
-using AdminSystem.Repositories;
 
 namespace AdminSystem.Controllers
 {
@@ -17,26 +14,40 @@ namespace AdminSystem.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
 
-        public ContactsController(IUnitOfWork unitOfWork = null)
+        public ContactsController(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
 
-        public ActionResult Index(string search = "", string jobTitle = "", string sort = "姓名", string order = "asc")
+        public IActionResult Index(string search = "", string jobTitle = "", string sort = "姓名", string order = "asc")
         {
-            Expression<Func<客戶聯絡人, bool>> filter = null;
+            var query = _unitOfWork.Contacts.Get();
+
             if (!string.IsNullOrEmpty(search))
             {
-                filter = c => c.姓名.Contains(search) || c.Email.Contains(search) || c.職稱.Contains(search);
-            }
-            if (!string.IsNullOrEmpty(jobTitle) && jobTitle != "全部")
-            {
-                Expression<Func<客戶聯絡人, bool>> titleFilter = c => c.職稱 == jobTitle;
-                filter = filter == null ? titleFilter : (c => filter.Compile()(c) && titleFilter.Compile()(c));
+                query = query.Where(c => c.姓名.Contains(search) ||
+                                        c.Email.Contains(search) ||
+                                        c.職稱.Contains(search) ||
+                                        (c.手機 != null && c.手機.Contains(search)) ||
+                                        (c.電話 != null && c.電話.Contains(search)));
             }
 
-            Func<IQueryable<客戶聯絡人>, IOrderedQueryable<客戶聯絡人>> orderBy = q => q.OrderBy(sort + " " + order);
-            var contacts = _unitOfWork.Contacts.Get(filter, orderBy).ToList();
+            if (!string.IsNullOrEmpty(jobTitle) && jobTitle != "全部")
+            {
+                query = query.Where(c => c.職稱 == jobTitle);
+            }
+
+            query = sort switch
+            {
+                "姓名" => order == "asc" ? query.OrderBy(c => c.姓名) : query.OrderByDescending(c => c.姓名),
+                "職稱" => order == "asc" ? query.OrderBy(c => c.職稱) : query.OrderByDescending(c => c.職稱),
+                "Email" => order == "asc" ? query.OrderBy(c => c.Email) : query.OrderByDescending(c => c.Email),
+                "手機" => order == "asc" ? query.OrderBy(c => c.手機 ?? "") : query.OrderByDescending(c => c.手機 ?? ""),
+                "電話" => order == "asc" ? query.OrderBy(c => c.電話 ?? "") : query.OrderByDescending(c => c.電話 ?? ""),
+                _ => query.OrderBy(c => c.姓名)
+            };
+
+            var contacts = query.ToList();
 
             ViewBag.Search = search;
             ViewBag.JobTitle = jobTitle;
@@ -48,14 +59,14 @@ namespace AdminSystem.Controllers
             return View(contacts);
         }
 
-        public ActionResult Details(int id)
+        public IActionResult Details(int id)
         {
             var contact = _unitOfWork.Contacts.GetById(id);
             if (contact == null) return NotFound();
             return View(contact);
         }
 
-        public ActionResult Create()
+        public IActionResult Create()
         {
             ViewBag.客戶Id = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱");
             return View();
@@ -63,7 +74,7 @@ namespace AdminSystem.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind("Id,客戶Id,職稱,姓名,Email,手機,電話")] 客戶聯絡人 contact)
+        public IActionResult Create([Bind("Id,客戶Id,職稱,姓名,Email,手機,電話")] 客戶聯絡人 contact)
         {
             if (ModelState.IsValid)
             {
@@ -71,28 +82,22 @@ namespace AdminSystem.Controllers
                 {
                     _unitOfWork.Contacts.Insert(contact);
                     _unitOfWork.Save();
-                    return RedirectToAction("Index");
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (InvalidOperationException ex)
                 {
                     ModelState.AddModelError("", ex.Message);
                 }
-                catch (DbEntityValidationException ex)
+                catch (DbUpdateException ex)
                 {
-                    foreach (var ve in ex.EntityValidationErrors)
-                    {
-                        foreach (var vee in ve.ValidationErrors)
-                        {
-                            ModelState.AddModelError(vee.PropertyName, vee.ErrorMessage);
-                        }
-                    }
+                    ModelState.AddModelError("", $"無法保存資料：{ex.InnerException?.Message ?? ex.Message}");
                 }
             }
             ViewBag.客戶Id = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱", contact.客戶Id);
             return View(contact);
         }
 
-        public ActionResult Edit(int id)
+        public IActionResult Edit(int id)
         {
             var contact = _unitOfWork.Contacts.GetById(id);
             if (contact == null) return NotFound();
@@ -102,7 +107,7 @@ namespace AdminSystem.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind("Id,客戶Id,職稱,姓名,Email,手機,電話")] 客戶聯絡人 contact)
+        public IActionResult Edit([Bind("Id,客戶Id,職稱,姓名,Email,手機,電話")] 客戶聯絡人 contact)
         {
             if (ModelState.IsValid)
             {
@@ -110,28 +115,22 @@ namespace AdminSystem.Controllers
                 {
                     _unitOfWork.Contacts.Update(contact);
                     _unitOfWork.Save();
-                    return RedirectToAction("Index");
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (InvalidOperationException ex)
                 {
                     ModelState.AddModelError("", ex.Message);
                 }
-                catch (DbEntityValidationException ex)
+                catch (DbUpdateException ex)
                 {
-                    foreach (var ve in ex.EntityValidationErrors)
-                    {
-                        foreach (var vee in ve.ValidationErrors)
-                        {
-                            ModelState.AddModelError(vee.PropertyName, vee.ErrorMessage);
-                        }
-                    }
+                    ModelState.AddModelError("", $"無法保存資料：{ex.InnerException?.Message ?? ex.Message}");
                 }
             }
             ViewBag.客戶Id = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱", contact.客戶Id);
             return View(contact);
         }
 
-        public ActionResult Delete(int id)
+        public IActionResult Delete(int id)
         {
             var contact = _unitOfWork.Contacts.GetById(id);
             if (contact == null) return NotFound();
@@ -140,62 +139,71 @@ namespace AdminSystem.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult DeleteConfirmed(int id)
+        public IActionResult DeleteConfirmed(int id)
         {
-            _unitOfWork.Contacts.Delete(id);
-            _unitOfWork.Save();
-            return RedirectToAction("Index");
+            try
+            {
+                _unitOfWork.Contacts.Delete(id);
+                _unitOfWork.Save();
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException ex)
+            {
+                ModelState.AddModelError("", $"無法刪除資料：{ex.InnerException?.Message ?? ex.Message}");
+                return RedirectToAction(nameof(Delete), new { id });
+            }
         }
 
-        public FileResult Export(string search = "", string jobTitle = "")
+        public IActionResult Export(string search = "", string jobTitle = "")
         {
-            Expression<Func<客戶聯絡人, bool>> filter = null;
+            var query = _unitOfWork.Contacts.Get();
+
             if (!string.IsNullOrEmpty(search))
             {
-                filter = c => c.姓名.Contains(search) || c.Email.Contains(search) || c.職稱.Contains(search);
+                query = query.Where(c => c.姓名.Contains(search) ||
+                                        c.Email.Contains(search) ||
+                                        c.職稱.Contains(search) ||
+                                        (c.手機 != null && c.手機.Contains(search)) ||
+                                        (c.電話 != null && c.電話.Contains(search)));
             }
+
             if (!string.IsNullOrEmpty(jobTitle) && jobTitle != "全部")
             {
-                Expression<Func<客戶聯絡人, bool>> titleFilter = c => c.職稱 == jobTitle;
-                filter = filter == null ? titleFilter : (c => filter.Compile()(c) && titleFilter.Compile()(c));
+                query = query.Where(c => c.職稱 == jobTitle);
             }
 
-            var data = _unitOfWork.Contacts.Get(filter).ToList();
+            var data = query.ToList();
 
-            using (var workbook = new XLWorkbook())
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("客戶聯絡人");
+            worksheet.Cell(1, 1).Value = "職稱";
+            worksheet.Cell(1, 2).Value = "姓名";
+            worksheet.Cell(1, 3).Value = "Email";
+            worksheet.Cell(1, 4).Value = "手機";
+            worksheet.Cell(1, 5).Value = "電話";
+
+            int row = 2;
+            foreach (var item in data)
             {
-                var worksheet = workbook.Worksheets.Add("客戶聯絡人");
-                worksheet.Cell(1, 1).Value = "職稱";
-                worksheet.Cell(1, 2).Value = "姓名";
-                worksheet.Cell(1, 3).Value = "Email";
-                worksheet.Cell(1, 4).Value = "手機";
-                worksheet.Cell(1, 5).Value = "電話";
-
-                int row = 2;
-                foreach (var item in data)
-                {
-                    worksheet.Cell(row, 1).Value = item.職稱;
-                    worksheet.Cell(row, 2).Value = item.姓名;
-                    worksheet.Cell(row, 3).Value = item.Email;
-                    worksheet.Cell(row, 4).Value = item.手機;
-                    worksheet.Cell(row, 5).Value = item.電話;
-                    row++;
-                }
-
-                using (var stream = new MemoryStream())
-                {
-                    workbook.SaveAs(stream);
-                    var content = stream.ToArray();
-                    return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "客戶聯絡人.xlsx");
-                }
+                worksheet.Cell(row, 1).Value = item.職稱 ?? "";
+                worksheet.Cell(row, 2).Value = item.姓名 ?? "";
+                worksheet.Cell(row, 3).Value = item.Email ?? "";
+                worksheet.Cell(row, 4).Value = item.手機 ?? "";
+                worksheet.Cell(row, 5).Value = item.電話 ?? "";
+                row++;
             }
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            var content = stream.ToArray();
+            return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "客戶聯絡人.xlsx");
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _unitOfWork.Dispose();
+                _unitOfWork?.Dispose();
             }
             base.Dispose(disposing);
         }

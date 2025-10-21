@@ -1,16 +1,25 @@
+```
+USE 客戶資料;
+GO
+```
+
 # Add Soft Delete
 ```
 ALTER TABLE dbo.客戶資料 ADD 是否已刪除 bit NOT NULL DEFAULT(0);
 ALTER TABLE dbo.客戶聯絡人 ADD 是否已刪除 bit NOT NULL DEFAULT(0);
 ALTER TABLE dbo.客戶銀行資訊 ADD 是否已刪除 bit NOT NULL DEFAULT(0);
+GO
 ```
 
 # Check Constraints
 ```
 ALTER TABLE dbo.客戶資料 ADD 客戶分類 nvarchar(50) NULL;
+GO
+
 /* Optional: */
 ALTER TABLE dbo.客戶資料 WITH NOCHECK ADD CONSTRAINT CK_客戶分類
 CHECK (客戶分類 IN (N'一般', N'VIP', N'黑名單', N'合作夥伴'));
+GO
 ```
 
 # Create View
@@ -20,6 +29,7 @@ SELECT c.Id, c.客戶名稱,
        (SELECT COUNT(*) FROM dbo.客戶聯絡人 WHERE 客戶Id = c.Id AND 是否已刪除 = 0) AS 聯絡人數量,
        (SELECT COUNT(*) FROM dbo.客戶銀行資訊 WHERE 客戶Id = c.Id AND 是否已刪除 = 0) AS 銀行帳戶數量
 FROM dbo.客戶資料 c WHERE c.是否已刪除 = 0;
+GO
 ```
 
 # Create Index
@@ -27,13 +37,11 @@ FROM dbo.客戶資料 c WHERE c.是否已刪除 = 0;
 CREATE UNIQUE INDEX UX_聯絡人_客戶_Email
 ON dbo.客戶聯絡人(客戶Id, Email)
 WHERE Email IS NOT NULL AND 是否已刪除 = 0;
+GO
 ```
 
 # Mock Data
 ```
-USE 客戶資料;
-GO
-
 -- Clean existing data
 DELETE FROM dbo.客戶銀行資訊;
 DELETE FROM dbo.客戶聯絡人;

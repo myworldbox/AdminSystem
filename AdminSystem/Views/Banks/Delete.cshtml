@@ -1,5 +1,55 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
+﻿@model AdminSystem.Models.客戶銀行資訊
+
+<h2>刪除銀行帳戶</h2>
+
+<h3>確定要刪除此銀行帳戶嗎？</h3>
+
+<div class="form-horizontal">
+    <div class="form-group">
+        <label class="control-label col-md-2">客戶</label>
+        <div class="col-md-10">
+            @Html.DisplayFor(model => model.客戶資料.客戶名稱)
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(model => model.銀行名稱, htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="col-md-10">
+            @Html.DisplayFor(model => model.銀行名稱)
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(model => model.銀行代碼, htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="col-md-10">
+            @Html.DisplayFor(model => model.銀行代碼)
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(model => model.分行代碼, htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="col-md-10">
+            @Html.DisplayFor(model => model.分行代碼)
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(model => model.帳戶名稱, htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="col-md-10">
+            @Html.DisplayFor(model => model.帳戶名稱)
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(model => model.帳戶號碼, htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="col-md-10">
+            @Html.DisplayFor(model => model.帳戶號碼)
+        </div>
+    </div>
+</div>
+
+@using (Html.BeginForm("DeleteConfirmed", "Banks", new { id = Model.Id }))
+{
+    @Html.AntiForgeryToken()
+    <div class="form-group">
+        <div class="col-md-offset-2 col-md-10">
+            <input type="submit" value="刪除" class="btn btn-danger" />
+            @Html.ActionLink("返回列表", "Index", null, new { @class = "btn btn-secondary" })
+        </div>
+    </div>
 }

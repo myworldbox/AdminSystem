@@ -1,5 +1,47 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿@model AdminSystem.Models.客戶銀行資訊
+
+<h2>銀行資訊詳情</h2>
+
+<div class="form-horizontal">
+    <div class="form-group">
+        <label class="control-label col-md-2">客戶</label>
+        <div class="col-md-10">
+            @Html.DisplayFor(model => model.客戶資料.客戶名稱)
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(model => model.銀行名稱, htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="col-md-10">
+            @Html.DisplayFor(model => model.銀行名稱)
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(model => model.銀行代碼, htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="col-md-10">
+            @Html.DisplayFor(model => model.銀行代碼)
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(model => model.分行代碼, htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="col-md-10">
+            @Html.DisplayFor(model => model.分行代碼)
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(model => model.帳戶名稱, htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="col-md-10">
+            @Html.DisplayFor(model => model.帳戶名稱)
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(model => model.帳戶號碼, htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="col-md-10">
+            @Html.DisplayFor(model => model.帳戶號碼)
+        </div>
+    </div>
+</div>
+
+<div>
+    @Html.ActionLink("編輯", "Edit", new { id = Model.Id }, new { @class = "btn btn-warning" })
+    @Html.ActionLink("返回列表", "Index", null, new { @class = "btn btn-secondary" })
+</div>

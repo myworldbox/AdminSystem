@@ -1,11 +1,13 @@
 using AdminSystem.Models;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AdminSystem.Models
 {
     public partial class 客戶聯絡人
     {
         public int Id { get; set; }
+        [ForeignKey("客戶資料")]
         public int 客戶Id { get; set; }
         [Required(ErrorMessage = "必填")]
         [StringLength(50)]
