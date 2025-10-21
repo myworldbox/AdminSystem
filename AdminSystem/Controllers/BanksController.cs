@@ -3,10 +3,6 @@ using AdminSystem.Models;
 using AdminSystem.Repositories;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Data.Entity.Validation;
-using System.IO;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Linq.Dynamic.Core;
 
@@ -64,22 +60,9 @@ namespace AdminSystem.Controllers
         {
             if (ModelState.IsValid)
             {
-                try
-                {
-                    _unitOfWork.Banks.Insert(bank);
-                    _unitOfWork.Save();
-                    return RedirectToAction("Index");
-                }
-                catch (DbEntityValidationException ex)
-                {
-                    foreach (var ve in ex.EntityValidationErrors)
-                    {
-                        foreach (var vee in ve.ValidationErrors)
-                        {
-                            ModelState.AddModelError(vee.PropertyName, vee.ErrorMessage);
-                        }
-                    }
-                }
+                _unitOfWork.Banks.Insert(bank);
+                _unitOfWork.Save();
+                return RedirectToAction("Index");
             }
             ViewBag.客戶Id = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱", bank.客戶Id);
             return View(bank);
@@ -99,22 +82,9 @@ namespace AdminSystem.Controllers
         {
             if (ModelState.IsValid)
             {
-                try
-                {
-                    _unitOfWork.Banks.Update(bank);
-                    _unitOfWork.Save();
-                    return RedirectToAction("Index");
-                }
-                catch (DbEntityValidationException ex)
-                {
-                    foreach (var ve in ex.EntityValidationErrors)
-                    {
-                        foreach (var vee in ve.ValidationErrors)
-                        {
-                            ModelState.AddModelError(vee.PropertyName, vee.ErrorMessage);
-                        }
-                    }
-                }
+                _unitOfWork.Banks.Update(bank);
+                _unitOfWork.Save();
+                return RedirectToAction("Index");
             }
             ViewBag.客戶Id = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱", bank.客戶Id);
             return View(bank);

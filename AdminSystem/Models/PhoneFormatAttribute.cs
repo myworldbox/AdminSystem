@@ -11,7 +11,7 @@ namespace AdminSystem.Models
             if (string.IsNullOrEmpty(phone)) return ValidationResult.Success;
             return Regex.IsMatch(phone, @"^\d{4}-\d{6}$")
                 ? ValidationResult.Success
-                : new ValidationResult("����榡������ xxxx-xxxxxx");
+                : new ValidationResult("請使用格式 xxxx-xxxxxx");
         }
     }
 }

@@ -7,8 +7,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddDbContext<CustomerEntities>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("CustomerEntities")));
+// builder.Services.AddDbContext<CustomerEntities>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("MSSQL.CustomerEntities")));
+
+builder.Services.AddDbContext<CustomerEntities>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQL.CustomerEntities")));
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
