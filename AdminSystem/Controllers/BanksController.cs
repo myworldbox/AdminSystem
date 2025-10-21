@@ -26,7 +26,12 @@ namespace AdminSystem.Controllers
             Expression<Func<客戶銀行資訊, bool>> filter = null;
             if (!string.IsNullOrEmpty(search))
             {
-                filter = b => b.銀行名稱.Contains(search) || b.帳戶名稱.Contains(search);
+                filter = b => (
+                b.銀行名稱.Contains(search) ||
+                b.銀行代碼.ToString().Contains(search) ||
+                b.分行代碼.ToString().Contains(search) ||
+                b.帳戶名稱.Contains(search) ||
+                b.帳戶號碼.ToString().Contains(search));
             }
 
             Func<IQueryable<客戶銀行資訊>, IOrderedQueryable<客戶銀行資訊>> orderBy = q => q.OrderBy(sort + " " + order);

@@ -43,7 +43,7 @@
     </div>
 </div>
 
-@using (Html.BeginForm("DeleteConfirmed", "Banks", new { id = Model.Id }))
+@using (Html.BeginForm("Delete", "Banks", new { id = Model.Id }))
 {
     @Html.AntiForgeryToken()
     <div class="form-group">
