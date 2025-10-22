@@ -3,7 +3,7 @@ namespace AdminSystem.Models
     public enum CustomerCategory
     {
         VIP,
-        Standard,
-        Enterprise
+        ¤@¯ë,
+        ¶Â¦W³æ
     }
 }
