@@ -47,7 +47,7 @@ namespace AdminSystem.Web.Controllers
             ViewBag.Category = category;
             ViewBag.Sort = sort;
             ViewBag.Order = order == "asc" ? "desc" : "asc";
-            ViewBag.Categories = new SelectList(Enum.GetValues(typeof(Enums)).Cast<Enums>().Select(e => e.ToString()), category);
+            ViewBag.Categories = new SelectList(Enum.GetValues(typeof(Enums.Category)).Cast<Enums.Category>().Select(e => e.ToString()), category);
             ViewData["Title"] = "Customers";
 
             return View(customers);
@@ -62,7 +62,7 @@ namespace AdminSystem.Web.Controllers
 
         public IActionResult Create()
         {
-            ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums)));
+            ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums.Category)));
             return View();
         }
 
@@ -76,7 +76,7 @@ namespace AdminSystem.Web.Controllers
                 _unitOfWork.Save();
                 return RedirectToAction(nameof(Index));
             }
-            ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums)));
+            ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums.Category)));
             return View(customer);
         }
 
@@ -84,7 +84,7 @@ namespace AdminSystem.Web.Controllers
         {
             var customer = _unitOfWork.Customers.GetById(id);
             if (customer == null) return NotFound();
-            ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums)), customer.客戶分類);
+            ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums.Category)), customer.客戶分類);
             return View(customer);
         }
 
@@ -98,7 +98,7 @@ namespace AdminSystem.Web.Controllers
                 _unitOfWork.Save();
                 return RedirectToAction(nameof(Index));
             }
-            ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums)), customer.客戶分類);
+            ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums.Category)), customer.客戶分類);
             return View(customer);
         }
 

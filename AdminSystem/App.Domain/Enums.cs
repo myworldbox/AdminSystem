@@ -1,9 +1,12 @@
 namespace AdminSystem.Models
 {
-    public enum Enums
+    public class Enums
     {
-        VIP,
-        一般,
-        黑名單
+        public enum Category
+        {
+            VIP,
+            一般,
+            黑名單
+        }
     }
 }
