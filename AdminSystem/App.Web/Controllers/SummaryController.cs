@@ -16,6 +16,9 @@ namespace AdminSystem.Web.Controllers
         public IActionResult Index()
         {
             var summaries = _context.vw_CustomerSummary.ToList();
+
+            ViewData["Title"] = "Summary";
+
             return View(summaries);
         }
     }

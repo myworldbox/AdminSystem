@@ -47,6 +47,7 @@ namespace AdminSystem.Web.Controllers
             ViewBag.Order = order == "asc" ? "desc" : "asc";
             ViewBag.JobTitles = new SelectList(_unitOfWork.Contacts.Get().Select(c => c.職稱).Distinct().ToList(), jobTitle);
             ViewBag.Customers = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱");
+            ViewData["Title"] = "Contacts";
 
             return View(contacts);
         }

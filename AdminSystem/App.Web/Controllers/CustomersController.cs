@@ -47,9 +47,8 @@ namespace AdminSystem.Web.Controllers
             ViewBag.Category = category;
             ViewBag.Sort = sort;
             ViewBag.Order = order == "asc" ? "desc" : "asc";
-            ViewBag.Categories = new SelectList(
-                Enum.GetValues(typeof(Enums)).Cast<Enums>().Select(e => e.ToString()),
-                category);
+            ViewBag.Categories = new SelectList(Enum.GetValues(typeof(Enums)).Cast<Enums>().Select(e => e.ToString()), category);
+            ViewData["Title"] = "Customers";
 
             return View(customers);
         }

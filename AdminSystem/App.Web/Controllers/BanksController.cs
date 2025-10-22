@@ -37,6 +37,7 @@ namespace AdminSystem.Web.Controllers
             ViewBag.Sort = sort;
             ViewBag.Order = order == "asc" ? "desc" : "asc";
             ViewBag.Customers = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱");
+            ViewData["Title"] = "Banks";
 
             return View(banks);
         }

@@ -5,19 +5,21 @@ using AdminSystem.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
+/*
 // Explicitly add config files from Web/
 builder.Configuration
-    .AddJsonFile(Path.Combine("Web", "appsettings.json"), optional: false, reloadOnChange: true)
-    .AddJsonFile(Path.Combine("Web", $"appsettings.{builder.Environment.EnvironmentName}.json"), optional: true)
+    .AddJsonFile(Path.Combine("App.Web", "appsettings.json"), optional: false, reloadOnChange: true)
+    .AddJsonFile(Path.Combine("App.Web", $"appsettings.{builder.Environment.EnvironmentName}.json"), optional: true)
     .AddEnvironmentVariables();
+*/
 
 // Add services to the container.
 builder.Services.AddControllersWithViews()
     .AddRazorOptions(options =>
     {
         options.ViewLocationFormats.Clear();
-        options.ViewLocationFormats.Add("/UI/Views/{1}/{0}.cshtml");
-        options.ViewLocationFormats.Add("/UI/Views/Shared/{0}.cshtml");
+        options.ViewLocationFormats.Add("App.UI/Views/{1}/{0}.cshtml");
+        options.ViewLocationFormats.Add("App.UI/Views/Shared/{0}.cshtml");
     });
 
 // builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("MSSQL.AppDbContext")));
