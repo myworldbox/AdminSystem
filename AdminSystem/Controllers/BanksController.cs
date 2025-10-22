@@ -17,7 +17,7 @@ namespace AdminSystem.Controllers
             _unitOfWork = unitOfWork;
         }
 
-        public ActionResult Index(string search = "", string sort = "銀行名稱", string order = "asc")
+        public ActionResult Index(string search = "", string sort = "Id", string order = "asc")
         {
             Expression<Func<客戶銀行資訊, bool>> filter = null;
             if (!string.IsNullOrEmpty(search))

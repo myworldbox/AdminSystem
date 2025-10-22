@@ -21,7 +21,6 @@ namespace AdminSystem.Models
         [StringLength(20)]
         public string 帳戶號碼 { get; set; }
         public bool 是否已刪除 { get; set; }
-
-        public virtual 客戶資料 客戶資料 { get; set; }
+        public virtual 客戶資料? 客戶資料 { get; set; }
     }
 }

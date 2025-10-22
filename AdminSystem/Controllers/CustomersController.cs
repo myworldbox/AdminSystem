@@ -3,9 +3,6 @@ using AdminSystem.Models;
 using AdminSystem.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System;
-using System.IO;
-using System.Linq;
 using System.Linq.Dynamic.Core;
 
 namespace CustomerManagementSystem.Controllers
@@ -19,7 +16,7 @@ namespace CustomerManagementSystem.Controllers
             _unitOfWork = unitOfWork;
         }
 
-        public IActionResult Index(string search = "", string category = "", string sort = "客戶名稱", string order = "asc")
+        public IActionResult Index(string search = "", string category = "", string sort = "Id", string order = "asc")
         {
             // start with base query
             var query = _unitOfWork.Customers.Get();

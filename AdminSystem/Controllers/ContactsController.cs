@@ -4,9 +4,7 @@ using AdminSystem.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.IO;
-using System.Linq;
+using System.Linq.Dynamic.Core;
 
 namespace AdminSystem.Controllers
 {
@@ -19,17 +17,18 @@ namespace AdminSystem.Controllers
             _unitOfWork = unitOfWork;
         }
 
-        public IActionResult Index(string search = "", string jobTitle = "", string sort = "姓名", string order = "asc")
+        public IActionResult Index(string search = "", string jobTitle = "", string sort = "Id", string order = "asc")
         {
             var query = _unitOfWork.Contacts.Get();
 
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(c => c.姓名.Contains(search) ||
-                                        c.Email.Contains(search) ||
-                                        c.職稱.Contains(search) ||
-                                        (c.手機 != null && c.手機.Contains(search)) ||
-                                        (c.電話 != null && c.電話.Contains(search)));
+                query = query.Where(c =>
+                    c.姓名.Contains(search) ||
+                    c.Email.Contains(search) ||
+                    c.職稱.Contains(search) ||
+                    (c.手機 != null && c.手機.Contains(search)) ||
+                    (c.電話 != null && c.電話.Contains(search)));
             }
 
             if (!string.IsNullOrEmpty(jobTitle) && jobTitle != "全部")
@@ -37,15 +36,8 @@ namespace AdminSystem.Controllers
                 query = query.Where(c => c.職稱 == jobTitle);
             }
 
-            query = sort switch
-            {
-                "姓名" => order == "asc" ? query.OrderBy(c => c.姓名) : query.OrderByDescending(c => c.姓名),
-                "職稱" => order == "asc" ? query.OrderBy(c => c.職稱) : query.OrderByDescending(c => c.職稱),
-                "Email" => order == "asc" ? query.OrderBy(c => c.Email) : query.OrderByDescending(c => c.Email),
-                "手機" => order == "asc" ? query.OrderBy(c => c.手機 ?? "") : query.OrderByDescending(c => c.手機 ?? ""),
-                "電話" => order == "asc" ? query.OrderBy(c => c.電話 ?? "") : query.OrderByDescending(c => c.電話 ?? ""),
-                _ => query.OrderBy(c => c.姓名)
-            };
+            // dynamic sort (requires System.Linq.Dynamic.Core)
+            query = query.OrderBy($"{sort} {order}");
 
             var contacts = query.ToList();
 
