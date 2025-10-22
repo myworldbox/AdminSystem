@@ -8,9 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // builder.Services.AddDbContext<CustomerEntities>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("MSSQL.CustomerEntities")));
-
 // builder.Services.AddDbContext<CustomerEntities>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQL.CustomerEntities")));
-
 builder.Services.AddDbContext<CustomerEntities>(options => options.UseMySql(builder.Configuration.GetConnectionString("MySQL.CustomerEntities"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("MySQL.CustomerEntities"))));
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
