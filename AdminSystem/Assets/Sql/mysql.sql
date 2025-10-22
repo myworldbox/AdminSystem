@@ -1,5 +1,7 @@
 USE mytestbox;
 
+SET SQL_SAFE_UPDATES = 0;
+
 -- Add Soft Delete Columns
 ALTER TABLE 客戶資料
 ADD COLUMN 是否已刪除 TINYINT(1) NOT NULL DEFAULT 0;
