@@ -1,0 +1,30 @@
+using AdminSystem.Application.Validators;
+using AdminSystem.Application.ViewModels;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace AdminSystem.Application.ViewModels
+{
+    public partial class UserContactViewModel
+    {
+        public int Id { get; set; }
+        [ForeignKey("客戶資料")]
+        public int 客戶Id { get; set; }
+        [Required(ErrorMessage = "必填")]
+        [StringLength(50)]
+        public string 職稱 { get; set; }
+        [Required(ErrorMessage = "必填")]
+        [StringLength(50)]
+        public string 姓名 { get; set; }
+        [Required(ErrorMessage = "必填")]
+        [EmailAddress(ErrorMessage = "無效格式")]
+        public string Email { get; set; }
+        [PhoneFormat]
+        public string? 手機 { get; set; }
+        [StringLength(50)]
+        public string? 電話 { get; set; }
+        public bool 是否已刪除 { get; set; }
+
+        public virtual InfoViewModel? 客戶資料 { get; set; }
+    }
+}
