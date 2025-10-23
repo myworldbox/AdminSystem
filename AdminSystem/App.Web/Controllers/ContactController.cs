@@ -1,14 +1,15 @@
-using ClosedXML.Excel;
 using AdminSystem.Application.ViewModels;
+using AdminSystem.Domain;
+using AdminSystem.Domain.Entities;
+using AdminSystem.Infrastructure.Repositories;
+using AutoMapper;
+using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Office2021.DocumentTasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Dynamic.Core;
-using AdminSystem.Infrastructure.Repositories;
-using AdminSystem.Domain;
-using AdminSystem.Domain.Entities;
-using DocumentFormat.OpenXml.Office2021.DocumentTasks;
-using AutoMapper;
+using System.Text.Json;
 
 namespace AdminSystem.Web.Controllers
 {
@@ -53,7 +54,7 @@ namespace AdminSystem.Web.Controllers
             ViewBag.Order = ((int)order + 1) % Enum.GetValues<Enums.Order>().Length;
             ViewBag.JobTitles = new SelectList(_unitOfWork.Contacts.Get().Select(c => c.職稱).Distinct().ToList(), jobTitle);
             ViewBag.Customers = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱");
-            ViewData["Title"] = "Contacts";
+            ViewData["Title"] = "Contact";
 
             var data = _mapper.Map<IEnumerable<ContactViewModel>>(contacts);
 
@@ -160,29 +161,9 @@ namespace AdminSystem.Web.Controllers
             }
         }
 
-        public IActionResult Export(string search = "", string jobTitle = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
+        public IActionResult Export(string data)
         {
-            var query = _unitOfWork.Contacts.Get();
-
-            if (!string.IsNullOrEmpty(search))
-            {
-                query = query.Where(c =>
-                    c.姓名.Contains(search) ||
-                    c.Email.Contains(search) ||
-                    c.職稱.Contains(search) ||
-                    c.手機 != null && c.手機.Contains(search) ||
-                    c.電話 != null && c.電話.Contains(search));
-            }
-
-            if (!string.IsNullOrEmpty(jobTitle) && jobTitle != "全部")
-            {
-                query = query.Where(c => c.職稱 == jobTitle);
-            }
-
-            // dynamic sort (requires System.Linq.Dynamic.Core)
-            query = query.OrderBy($"{sort} {order}");
-
-            var data = query.ToList();
+            var contact = JsonSerializer.Deserialize<IEnumerable<ContactViewModel>>(data);
 
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("客戶聯絡人");
@@ -193,7 +174,7 @@ namespace AdminSystem.Web.Controllers
             worksheet.Cell(1, 5).Value = "電話";
 
             int row = 2;
-            foreach (var item in data)
+            foreach (var item in contact)
             {
                 worksheet.Cell(row, 1).Value = item.職稱 ?? "";
                 worksheet.Cell(row, 2).Value = item.姓名 ?? "";

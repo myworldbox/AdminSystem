@@ -1,4 +1,4 @@
-using AutoMapper;
+ï»¿using AutoMapper;
 using AdminSystem.Domain.Entities;
 using AdminSystem.Application.ViewModels;
 
@@ -8,14 +8,14 @@ public class MappingHelper : Profile
 {
     public MappingHelper()
     {
-        CreateMap<«È¤á¸ê®Æ, InfoViewModel>();
-        CreateMap<InfoViewModel, «È¤á¸ê®Æ>();
+        CreateMap<å®¢æˆ¶è³‡æ–™, InfoViewModel>();
+        CreateMap<InfoViewModel, å®¢æˆ¶è³‡æ–™>();
 
-        CreateMap<«È¤áÁpµ¸¤H, ContactViewModel>();
-        CreateMap<ContactViewModel, «È¤áÁpµ¸¤H>();
+        CreateMap<å®¢æˆ¶è¯çµ¡äºº, ContactViewModel>();
+        CreateMap<ContactViewModel, å®¢æˆ¶è¯çµ¡äºº>();
 
-        CreateMap<«È¤á»È¦æ¸ê°T, BankViewModel>();
-        CreateMap<BankViewModel, «È¤á»È¦æ¸ê°T>();
+        CreateMap<å®¢æˆ¶éŠ€è¡Œè³‡è¨Š, BankViewModel>();
+        CreateMap<BankViewModel, å®¢æˆ¶éŠ€è¡Œè³‡è¨Š>();
 
         CreateMap<VwCustomerSummary, SummaryViewModel>();
         CreateMap<SummaryViewModel, VwCustomerSummary>();

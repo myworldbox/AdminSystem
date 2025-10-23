@@ -9,6 +9,7 @@ using AdminSystem.Domain;
 using AutoMapper;
 using AdminSystem.Domain.Entities;
 using System.Diagnostics.Contracts;
+using System.Text.Json;
 
 namespace AdminSystem.Web.Controllers
 {
@@ -43,7 +44,7 @@ namespace AdminSystem.Web.Controllers
             ViewBag.Sort = sort;
             ViewBag.Order = ((int)order + 1) % Enum.GetValues<Enums.Order>().Length;
             ViewBag.Customers = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱");
-            ViewData["Title"] = "Banks";
+            ViewData["Title"] = "Bank";
 
             var data = _mapper.Map<IEnumerable<BankViewModel>>(banks);
 
@@ -120,22 +121,10 @@ namespace AdminSystem.Web.Controllers
             return RedirectToAction("Index");
         }
 
-        public FileResult Export(string search = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
+        [HttpPost]
+        public FileResult Export(string data)
         {
-            Expression<Func<客戶銀行資訊, bool>> filter = null;
-            if (!string.IsNullOrEmpty(search))
-            {
-                filter = b =>
-                b.銀行名稱.Contains(search) ||
-                b.銀行代碼.ToString().Contains(search) ||
-                b.分行代碼.ToString().Contains(search) ||
-                b.帳戶名稱.Contains(search) ||
-                b.帳戶號碼.ToString().Contains(search);
-            }
-
-            Func<IQueryable<客戶銀行資訊>, IOrderedQueryable<客戶銀行資訊>> orderBy = q => q.OrderBy(sort + " " + order);
-            var data = _unitOfWork.Banks.Get(filter, orderBy).ToList();
-
+            var bank = JsonSerializer.Deserialize<IEnumerable<BankViewModel>>(data);
             using (var workbook = new XLWorkbook())
             {
                 var worksheet = workbook.Worksheets.Add("客戶銀行資訊");
@@ -146,7 +135,7 @@ namespace AdminSystem.Web.Controllers
                 worksheet.Cell(1, 5).Value = "帳戶號碼";
 
                 int row = 2;
-                foreach (var item in data)
+                foreach (var item in bank)
                 {
                     worksheet.Cell(row, 1).Value = item.銀行名稱;
                     worksheet.Cell(row, 2).Value = item.銀行代碼;

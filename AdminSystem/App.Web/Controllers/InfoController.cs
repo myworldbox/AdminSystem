@@ -1,12 +1,13 @@
-using ClosedXML.Excel;
 using AdminSystem.Application.ViewModels;
+using AdminSystem.Domain;
+using AdminSystem.Domain.Entities;
+using AdminSystem.Infrastructure.Repositories;
+using AutoMapper;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Linq.Dynamic.Core;
-using AdminSystem.Infrastructure.Repositories;
-using AdminSystem.Domain;
-using AutoMapper;
-using AdminSystem.Domain.Entities;
+using System.Text.Json;
 
 namespace AdminSystem.Web.Controllers
 {
@@ -137,30 +138,9 @@ namespace AdminSystem.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        public FileResult Export(string search = "", string category = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
+        public FileResult Export(string data)
         {
-            var query = _unitOfWork.Infos.Get();
-
-            if (!string.IsNullOrEmpty(search))
-            {
-                query = query.Where(c =>
-                    c.客戶名稱.Contains(search) ||
-                    c.統一編號.Contains(search) ||
-                    c.電話.Contains(search) ||
-                    c.地址.Contains(search) ||
-                    c.Email.Contains(search) ||
-                    c.客戶分類.ToString().Contains(search));
-            }
-
-            if (!string.IsNullOrEmpty(category) && category != "全部")
-            {
-                query = query.Where(c => c.客戶分類.ToString() == category);
-            }
-
-            // dynamic sort (requires System.Linq.Dynamic.Core)
-            query = query.OrderBy($"{sort} {order}");
-
-            var data = query.ToList();
+            var info = JsonSerializer.Deserialize<IEnumerable<InfoViewModel>>(data);
 
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("客戶資料");
@@ -173,7 +153,7 @@ namespace AdminSystem.Web.Controllers
             worksheet.Cell(1, 7).Value = "客戶分類";
 
             int row = 2;
-            foreach (var item in data)
+            foreach (var item in info)
             {
                 worksheet.Cell(row, 1).Value = item.客戶名稱;
                 worksheet.Cell(row, 2).Value = item.統一編號;

@@ -1,12 +1,18 @@
 ﻿@using AdminSystem.Application.ViewModels
+@using System.Text.Json
 @model IEnumerable<InfoViewModel>
 
 <h2>客戶資料管理</h2>
 
 <p>
     @Html.ActionLink("新增客戶", "Create", null, new { @class = "btn btn-primary" })
-    @Html.ActionLink("匯出 Excel", "Export", new { sort = ViewBag.Sort, order = ViewBag.Order, search = ViewBag.Search, category = ViewBag.Category }, new { @class = "btn btn-success" })
 </p>
+
+@using (Html.BeginForm("Export", "Info", FormMethod.Post))
+{
+    @Html.Hidden("data", JsonSerializer.Serialize(Model))
+    <button type="submit" class="btn btn-success">匯出 Excel</button>
+}
 
 @using (Html.BeginForm("Index", "Info", FormMethod.Get, new { @class = "form-inline" }))
 {
