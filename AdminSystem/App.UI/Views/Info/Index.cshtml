@@ -5,10 +5,10 @@
 
 <p>
     @Html.ActionLink("新增客戶", "Create", null, new { @class = "btn btn-primary" })
-    @Html.ActionLink("匯出 Excel", "Export", new { search = ViewBag.Search, category = ViewBag.Category }, new { @class = "btn btn-success" })
+    @Html.ActionLink("匯出 Excel", "Export", new { sort = ViewBag.Sort, order = ViewBag.Order, search = ViewBag.Search, category = ViewBag.Category }, new { @class = "btn btn-success" })
 </p>
 
-@using (Html.BeginForm("Index", "Customers", FormMethod.Get, new { @class = "form-inline" }))
+@using (Html.BeginForm("Index", "Info", FormMethod.Get, new { @class = "form-inline" }))
 {
     <div class="form-group">
         <label for="search">搜尋:</label>
