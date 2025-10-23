@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Linq.Expressions;
 using System.Linq.Dynamic.Core;
 using AdminSystem.Infrastructure.Repositories;
-using DocumentFormat.OpenXml.Drawing.Charts;
+using AdminSystem.Models;
 
 namespace AdminSystem.Web.Controllers
 {
@@ -18,9 +18,9 @@ namespace AdminSystem.Web.Controllers
             _unitOfWork = unitOfWork;
         }
 
-        public ActionResult Index(string search = "", string sort = "Id", string order = "asc")
+        public ActionResult Index(string search = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
         {
-            Expression<Func<BankViewModel, bool>> filter = null;
+            Expression<Func<BankViewModel, bool>>? filter = null;
             if (!string.IsNullOrEmpty(search))
             {
                 filter = b => 
@@ -36,7 +36,7 @@ namespace AdminSystem.Web.Controllers
 
             ViewBag.Search = search;
             ViewBag.Sort = sort;
-            ViewBag.Order = order == "asc" ? "desc" : "asc";
+            ViewBag.Order = ((int)order + 1) % Enum.GetValues<Enums.Order>().Length;
             ViewBag.Customers = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱");
             ViewData["Title"] = "Banks";
 
@@ -108,7 +108,7 @@ namespace AdminSystem.Web.Controllers
             return RedirectToAction("Index");
         }
 
-        public FileResult Export(string search = "", string sort = "Id", string order = "asc")
+        public FileResult Export(string search = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
         {
             Expression<Func<BankViewModel, bool>> filter = null;
             if (!string.IsNullOrEmpty(search))

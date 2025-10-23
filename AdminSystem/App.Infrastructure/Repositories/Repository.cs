@@ -19,8 +19,8 @@ namespace AdminSystem.Infrastructure.Repositories
         }
 
         public virtual IQueryable<TEntity> Get(
-            Expression<Func<TEntity, bool>> filter = null,
-            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
+            Expression<Func<TEntity, bool>>? filter,
+            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy,
             string includeProperties = "")
         {
             IQueryable<TEntity> query = DbSet;

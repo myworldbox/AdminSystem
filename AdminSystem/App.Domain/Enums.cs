@@ -8,5 +8,11 @@
             一般,
             黑名單
         }
+
+        public enum Order
+        {
+            asc,
+            desc
+        }
     }
 }

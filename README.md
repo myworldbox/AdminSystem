@@ -11,5 +11,5 @@ dotnet ef database update --project AdminSystem --startup-project AdminSystem
 ## EF Core Database‑First
 *Database ---> .Net Entities*
 ```
-Scaffold-DbContext "Name=MSSQL.CustomerEntities" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Temp/Application/Entities -ContextDir Temp/Infrastructure/Data -Context CustomerEntities -Force -DataAnnotations
+Scaffold-DbContext "Name=MSSQL.AppDbContext" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Temp/App.Domain/Entities -ContextDir Temp/App.Infrastructure/Data -Context AppDbContext -Force -DataAnnotations
 ```

@@ -17,7 +17,7 @@ namespace AdminSystem.Web.Controllers
             _unitOfWork = unitOfWork;
         }
 
-        public IActionResult Index(string search = "", string category = "", string sort = "Id", string order = "asc")
+        public IActionResult Index(string search = "", string category = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
         {
             // start with base query
             var query = _unitOfWork.Customers.Get();
@@ -46,7 +46,7 @@ namespace AdminSystem.Web.Controllers
             ViewBag.Search = search;
             ViewBag.Category = category;
             ViewBag.Sort = sort;
-            ViewBag.Order = order == "asc" ? "desc" : "asc";
+            ViewBag.Order = ((int)order + 1) % Enum.GetValues<Enums.Order>().Length;
             ViewBag.Categories = new SelectList(Enum.GetValues(typeof(Enums.Category)).Cast<Enums.Category>().Select(e => e.ToString()), category);
             ViewData["Title"] = "Customers";
 
@@ -118,7 +118,7 @@ namespace AdminSystem.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        public FileResult Export(string search = "", string category = "")
+        public FileResult Export(string search = "", string category = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
         {
             var query = _unitOfWork.Customers.Get();
 
@@ -127,13 +127,19 @@ namespace AdminSystem.Web.Controllers
                 query = query.Where(c =>
                     c.客戶名稱.Contains(search) ||
                     c.統一編號.Contains(search) ||
-                    c.Email.Contains(search));
+                    c.電話.Contains(search) ||
+                    c.地址.Contains(search) ||
+                    c.Email.Contains(search) ||
+                    c.客戶分類.Contains(search));
             }
 
             if (!string.IsNullOrEmpty(category) && category != "全部")
             {
                 query = query.Where(c => c.客戶分類 == category);
             }
+
+            // dynamic sort (requires System.Linq.Dynamic.Core)
+            query = query.OrderBy($"{sort} {order}");
 
             var data = query.ToList();
 

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Dynamic.Core;
 using AdminSystem.Infrastructure.Repositories;
+using AdminSystem.Models;
 
 namespace AdminSystem.Web.Controllers
 {
@@ -17,7 +18,7 @@ namespace AdminSystem.Web.Controllers
             _unitOfWork = unitOfWork;
         }
 
-        public IActionResult Index(string search = "", string jobTitle = "", string sort = "Id", string order = "asc")
+        public IActionResult Index(string search = "", string jobTitle = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
         {
             var query = _unitOfWork.Contacts.Get();
 
@@ -44,7 +45,7 @@ namespace AdminSystem.Web.Controllers
             ViewBag.Search = search;
             ViewBag.JobTitle = jobTitle;
             ViewBag.Sort = sort;
-            ViewBag.Order = order == "asc" ? "desc" : "asc";
+            ViewBag.Order = ((int)order + 1) % Enum.GetValues<Enums.Order>().Length;
             ViewBag.JobTitles = new SelectList(_unitOfWork.Contacts.Get().Select(c => c.職稱).Distinct().ToList(), jobTitle);
             ViewBag.Customers = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱");
             ViewData["Title"] = "Contacts";
@@ -147,7 +148,7 @@ namespace AdminSystem.Web.Controllers
             }
         }
 
-        public IActionResult Export(string search = "", string jobTitle = "", string sort = "Id", string order = "asc")
+        public IActionResult Export(string search = "", string jobTitle = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
         {
             var query = _unitOfWork.Contacts.Get();
 
