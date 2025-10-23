@@ -1,6 +1,6 @@
 namespace AdminSystem.Application.ViewModels
 {
-    public class ErrorViewModel
+    public record ErrorViewModel
     {
         public string? RequestId { get; set; }
 

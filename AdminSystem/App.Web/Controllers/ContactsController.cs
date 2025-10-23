@@ -67,7 +67,7 @@ namespace AdminSystem.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create([Bind("Id,客戶Id,職稱,姓名,Email,手機,電話")] UserContactViewModel contact)
+        public IActionResult Create([Bind("Id,客戶Id,職稱,姓名,Email,手機,電話")] ContactViewModel contact)
         {
             if (ModelState.IsValid)
             {
@@ -100,7 +100,7 @@ namespace AdminSystem.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit([Bind("Id,客戶Id,職稱,姓名,Email,手機,電話")] UserContactViewModel contact)
+        public IActionResult Edit([Bind("Id,客戶Id,職稱,姓名,Email,手機,電話")] ContactViewModel contact)
         {
             if (ModelState.IsValid)
             {
@@ -147,23 +147,27 @@ namespace AdminSystem.Web.Controllers
             }
         }
 
-        public IActionResult Export(string search = "", string jobTitle = "")
+        public IActionResult Export(string search = "", string jobTitle = "", string sort = "Id", string order = "asc")
         {
             var query = _unitOfWork.Contacts.Get();
 
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(c => c.姓名.Contains(search) ||
-                                        c.Email.Contains(search) ||
-                                        c.職稱.Contains(search) ||
-                                        c.手機 != null && c.手機.Contains(search) ||
-                                        c.電話 != null && c.電話.Contains(search));
+                query = query.Where(c =>
+                    c.姓名.Contains(search) ||
+                    c.Email.Contains(search) ||
+                    c.職稱.Contains(search) ||
+                    c.手機 != null && c.手機.Contains(search) ||
+                    c.電話 != null && c.電話.Contains(search));
             }
 
             if (!string.IsNullOrEmpty(jobTitle) && jobTitle != "全部")
             {
                 query = query.Where(c => c.職稱 == jobTitle);
             }
+
+            // dynamic sort (requires System.Linq.Dynamic.Core)
+            query = query.OrderBy($"{sort} {order}");
 
             var data = query.ToList();
 

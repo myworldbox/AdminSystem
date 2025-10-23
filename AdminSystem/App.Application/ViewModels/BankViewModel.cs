@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AdminSystem.Application.ViewModels
 {
-    public partial class UserBankViewModel
+    public record BankViewModel
     {
         public int Id { get; set; }
         [ForeignKey("客戶資料")]

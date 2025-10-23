@@ -3,12 +3,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AdminSystem.Application.ViewModels
 {
-    public partial class InfoViewModel
+    public record InfoViewModel
     {
         public InfoViewModel()
         {
-            客戶聯絡人 = new HashSet<UserContactViewModel>();
-            客戶銀行資訊 = new HashSet<UserBankViewModel>();
+            客戶聯絡人 = new HashSet<ContactViewModel>();
+            客戶銀行資訊 = new HashSet<BankViewModel>();
         }
 
         public int Id { get; set; }
@@ -30,7 +30,7 @@ namespace AdminSystem.Application.ViewModels
         public string? 客戶分類 { get; set; }
         public bool 是否已刪除 { get; set; }
 
-        public virtual ICollection<UserContactViewModel> 客戶聯絡人 { get; set; }
-        public virtual ICollection<UserBankViewModel> 客戶銀行資訊 { get; set; }
+        public virtual ICollection<ContactViewModel> 客戶聯絡人 { get; set; }
+        public virtual ICollection<BankViewModel> 客戶銀行資訊 { get; set; }
     }
 }

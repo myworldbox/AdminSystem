@@ -1,6 +1,6 @@
 namespace AdminSystem.Application.ViewModels
 {
-    public class UserSummaryViewModel
+    public record SummaryViewModel
     {
         public int Id { get; set; }
         public string? 客戶名稱 { get; set; }

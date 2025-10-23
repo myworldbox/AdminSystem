@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Linq.Expressions;
 using System.Linq.Dynamic.Core;
 using AdminSystem.Infrastructure.Repositories;
+using DocumentFormat.OpenXml.Drawing.Charts;
 
 namespace AdminSystem.Web.Controllers
 {
@@ -19,7 +20,7 @@ namespace AdminSystem.Web.Controllers
 
         public ActionResult Index(string search = "", string sort = "Id", string order = "asc")
         {
-            Expression<Func<UserBankViewModel, bool>> filter = null;
+            Expression<Func<BankViewModel, bool>> filter = null;
             if (!string.IsNullOrEmpty(search))
             {
                 filter = b => 
@@ -30,7 +31,7 @@ namespace AdminSystem.Web.Controllers
                 b.帳戶號碼.ToString().Contains(search);
             }
 
-            Func<IQueryable<UserBankViewModel>, IOrderedQueryable<UserBankViewModel>> orderBy = q => q.OrderBy(sort + " " + order);
+            Func<IQueryable<BankViewModel>, IOrderedQueryable<BankViewModel>> orderBy = q => q.OrderBy(sort + " " + order);
             var banks = _unitOfWork.Banks.Get(filter, orderBy).ToList();
 
             ViewBag.Search = search;
@@ -57,7 +58,7 @@ namespace AdminSystem.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind("Id,客戶Id,銀行名稱,銀行代碼,分行代碼,帳戶名稱,帳戶號碼")] UserBankViewModel bank)
+        public ActionResult Create([Bind("Id,客戶Id,銀行名稱,銀行代碼,分行代碼,帳戶名稱,帳戶號碼")] BankViewModel bank)
         {
             if (ModelState.IsValid)
             {
@@ -79,7 +80,7 @@ namespace AdminSystem.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind("Id,客戶Id,銀行名稱,銀行代碼,分行代碼,帳戶名稱,帳戶號碼")] UserBankViewModel bank)
+        public ActionResult Edit([Bind("Id,客戶Id,銀行名稱,銀行代碼,分行代碼,帳戶名稱,帳戶號碼")] BankViewModel bank)
         {
             if (ModelState.IsValid)
             {
@@ -107,15 +108,21 @@ namespace AdminSystem.Web.Controllers
             return RedirectToAction("Index");
         }
 
-        public FileResult Export(string search = "")
+        public FileResult Export(string search = "", string sort = "Id", string order = "asc")
         {
-            Expression<Func<UserBankViewModel, bool>> filter = null;
+            Expression<Func<BankViewModel, bool>> filter = null;
             if (!string.IsNullOrEmpty(search))
             {
-                filter = b => b.銀行名稱.Contains(search) || b.帳戶名稱.Contains(search);
+                filter = b =>
+                b.銀行名稱.Contains(search) ||
+                b.銀行代碼.ToString().Contains(search) ||
+                b.分行代碼.ToString().Contains(search) ||
+                b.帳戶名稱.Contains(search) ||
+                b.帳戶號碼.ToString().Contains(search);
             }
 
-            var data = _unitOfWork.Banks.Get(filter).ToList();
+            Func<IQueryable<BankViewModel>, IOrderedQueryable<BankViewModel>> orderBy = q => q.OrderBy(sort + " " + order);
+            var data = _unitOfWork.Banks.Get(filter, orderBy).ToList();
 
             using (var workbook = new XLWorkbook())
             {

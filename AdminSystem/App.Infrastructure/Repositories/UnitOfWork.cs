@@ -12,13 +12,13 @@ namespace AdminSystem.Infrastructure.Repositories
         {
             _context = context;
             Customers = new Repository<InfoViewModel>(_context);
-            Contacts = new ContactRepository(_context);  // custom repo
-            Banks = new Repository<UserBankViewModel>(_context);
+            Contacts = new Repository<ContactViewModel>(_context);  // custom repo
+            Banks = new Repository<BankViewModel>(_context);
         }
 
         public IRepository<InfoViewModel> Customers { get; }
-        public IRepository<UserContactViewModel> Contacts { get; }
-        public IRepository<UserBankViewModel> Banks { get; }
+        public IRepository<ContactViewModel> Contacts { get; }
+        public IRepository<BankViewModel> Banks { get; }
 
         public int Save()
         {

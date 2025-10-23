@@ -23,9 +23,9 @@ builder.Services.AddControllersWithViews()
         options.ViewLocationFormats.Add("App.UI/Views/Shared/{0}.cshtml");
     });
 
-// builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("MSSQL.AppDbContext")));
+builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("MSSQL.AppDbContext")));
 // builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQL.AppDbContext")));
-builder.Services.AddDbContext<AppDbContext>(options => options.UseMySql(builder.Configuration.GetConnectionString("MySQL.AppDbContext"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("MySQL.AppDbContext"))));
+// builder.Services.AddDbContext<AppDbContext>(options => options.UseMySql(builder.Configuration.GetConnectionString("MySQL.AppDbContext"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("MySQL.AppDbContext"))));
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
