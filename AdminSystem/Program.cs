@@ -1,3 +1,4 @@
+using AdminSystem.Application.Helpers;
 using AdminSystem.Application.ViewModels;
 using AdminSystem.Infrastructure.Data;
 using AdminSystem.Infrastructure.Repositories;
@@ -28,6 +29,8 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(buil
 // builder.Services.AddDbContext<AppDbContext>(options => options.UseMySql(builder.Configuration.GetConnectionString("MySQL.AppDbContext"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("MySQL.AppDbContext"))));
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+builder.Services.AddAutoMapper(config => config.AddProfile<MappingHelper>());
 
 var app = builder.Build();
 

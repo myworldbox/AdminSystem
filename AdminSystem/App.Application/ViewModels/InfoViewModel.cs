@@ -1,3 +1,4 @@
+using AdminSystem.Domain;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -27,7 +28,7 @@ namespace AdminSystem.Application.ViewModels
         public string? 地址 { get; set; }
         [EmailAddress(ErrorMessage = "無效格式")]
         public string? Email { get; set; }
-        public string? 客戶分類 { get; set; }
+        public Enums.Category? 客戶分類 { get; set; }
         public bool 是否已刪除 { get; set; }
 
         public virtual ICollection<ContactViewModel> 客戶聯絡人 { get; set; }

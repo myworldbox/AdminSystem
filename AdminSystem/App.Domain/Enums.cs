@@ -1,4 +1,4 @@
-﻿namespace AdminSystem.Models
+﻿namespace AdminSystem.Domain
 {
     public class Enums
     {

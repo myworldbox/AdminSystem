@@ -1,4 +1,5 @@
 ﻿using AdminSystem.Application.ViewModels;
+using AdminSystem.Domain.Entities;
 using AdminSystem.Infrastructure.Data;
 
 namespace AdminSystem.Infrastructure.Repositories
@@ -11,14 +12,14 @@ namespace AdminSystem.Infrastructure.Repositories
         public UnitOfWork(AppDbContext context)
         {
             _context = context;
-            Customers = new Repository<InfoViewModel>(_context);
-            Contacts = new Repository<ContactViewModel>(_context);  // custom repo
-            Banks = new Repository<BankViewModel>(_context);
+            Infos = new Repository<客戶資料>(_context);
+            Contacts = new Repository<客戶聯絡人>(_context);  // custom repo
+            Banks = new Repository<客戶銀行資訊>(_context);
         }
 
-        public IRepository<InfoViewModel> Customers { get; }
-        public IRepository<ContactViewModel> Contacts { get; }
-        public IRepository<BankViewModel> Banks { get; }
+        public IRepository<客戶資料> Infos { get; }
+        public IRepository<客戶聯絡人> Contacts { get; }
+        public IRepository<客戶銀行資訊> Banks { get; }
 
         public int Save()
         {

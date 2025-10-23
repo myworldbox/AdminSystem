@@ -4,23 +4,27 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Linq.Dynamic.Core;
 using AdminSystem.Infrastructure.Repositories;
-using AdminSystem.Models;
+using AdminSystem.Domain;
+using AutoMapper;
+using AdminSystem.Domain.Entities;
 
 namespace AdminSystem.Web.Controllers
 {
-    public class CustomersController : Controller
+    public class InfoController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
 
-        public CustomersController(IUnitOfWork unitOfWork)
+        public InfoController(IUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
         }
 
-        public IActionResult Index(string search = "", string category = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
+        public IActionResult Index(string search = "", string sort = "Id", Enums.Order order = Enums.Order.asc, Enums.Category? category = null)
         {
             // start with base query
-            var query = _unitOfWork.Customers.Get();
+            var query = _unitOfWork.Infos.Get();
 
             if (!string.IsNullOrEmpty(search))
             {
@@ -29,35 +33,46 @@ namespace AdminSystem.Web.Controllers
                     c.統一編號.Contains(search) ||
                     c.電話.Contains(search) ||
                     c.地址.Contains(search) ||
-                    c.Email.Contains(search) ||
-                    c.客戶分類.Contains(search));
+                    c.Email.Contains(search));
             }
 
-            if (!string.IsNullOrEmpty(category) && category != "全部")
+            if (category != null)
             {
-                query = query.Where(c => c.客戶分類 == category);
+                query = query.Where(c => c.客戶分類 == category.ToString());
             }
 
             // dynamic sort (requires System.Linq.Dynamic.Core)
             query = query.OrderBy($"{sort} {order}");
 
-            var customers = query.ToList();   // should now work
+           var infos = query.ToList();   // should now work
 
             ViewBag.Search = search;
             ViewBag.Category = category;
             ViewBag.Sort = sort;
             ViewBag.Order = ((int)order + 1) % Enum.GetValues<Enums.Order>().Length;
-            ViewBag.Categories = new SelectList(Enum.GetValues(typeof(Enums.Category)).Cast<Enums.Category>().Select(e => e.ToString()), category);
-            ViewData["Title"] = "Customers";
+            ViewBag.Categories = new SelectList(
+                Enum.GetValues(typeof(Enums.Category)).Cast<Enums.Category>().Select(e => new
+                {
+                    Value = e,
+                    Text = e.ToString()
+                }),
+                "Value",
+                "Text",
+                category
+            );
+            ViewData["Title"] = "Info";
 
-            return View(customers);
+            var data = _mapper.Map<IEnumerable<InfoViewModel>>(infos);
+
+            return View(data);
         }
 
         public IActionResult Details(int id)
         {
-            var customer = _unitOfWork.Customers.GetById(id);
-            if (customer == null) return NotFound();
-            return View(customer);
+            var info = _unitOfWork.Infos.GetById(id);
+            if (info == null) return NotFound();
+            var data = _mapper.Map<InfoViewModel>(info);
+            return View(data);
         }
 
         public IActionResult Create()
@@ -68,59 +83,63 @@ namespace AdminSystem.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create([Bind("Id,客戶名稱,統一編號,電話,傳真,地址,Email,客戶分類")] InfoViewModel customer)
+        public IActionResult Create([Bind("Id,客戶名稱,統一編號,電話,傳真,地址,Email,客戶分類")] InfoViewModel info)
         {
             if (ModelState.IsValid)
             {
-                _unitOfWork.Customers.Insert(customer);
+                var data = _mapper.Map<客戶資料>(info);
+                _unitOfWork.Infos.Insert(data);
                 _unitOfWork.Save();
                 return RedirectToAction(nameof(Index));
             }
             ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums.Category)));
-            return View(customer);
+            return View(info);
         }
 
         public IActionResult Edit(int id)
         {
-            var customer = _unitOfWork.Customers.GetById(id);
-            if (customer == null) return NotFound();
-            ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums.Category)), customer.客戶分類);
-            return View(customer);
+            var info = _unitOfWork.Infos.GetById(id);
+            if (info == null) return NotFound();
+            ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums.Category)), info.客戶分類);
+            var data = _mapper.Map<InfoViewModel>(info);
+            return View(data);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit([Bind("Id,客戶名稱,統一編號,電話,傳真,地址,Email,客戶分類")] InfoViewModel customer)
+        public IActionResult Edit([Bind("Id,客戶名稱,統一編號,電話,傳真,地址,Email,客戶分類")] InfoViewModel info)
         {
             if (ModelState.IsValid)
             {
-                _unitOfWork.Customers.Update(customer);
+                var data = _mapper.Map<客戶資料>(info);
+                _unitOfWork.Infos.Update(data);
                 _unitOfWork.Save();
                 return RedirectToAction(nameof(Index));
             }
-            ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums.Category)), customer.客戶分類);
-            return View(customer);
+            ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums.Category)), info.客戶分類);
+            return View(info);
         }
 
         public IActionResult Delete(int id)
         {
-            var customer = _unitOfWork.Customers.GetById(id);
-            if (customer == null) return NotFound();
-            return View(customer);
+            var info = _unitOfWork.Infos.GetById(id);
+            if (info == null) return NotFound();
+            var data = _mapper.Map<InfoViewModel>(info);
+            return View(data);
         }
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public IActionResult DeleteConfirmed(int id)
         {
-            _unitOfWork.Customers.Delete(id);
+            _unitOfWork.Infos.Delete(id);
             _unitOfWork.Save();
             return RedirectToAction(nameof(Index));
         }
 
         public FileResult Export(string search = "", string category = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
         {
-            var query = _unitOfWork.Customers.Get();
+            var query = _unitOfWork.Infos.Get();
 
             if (!string.IsNullOrEmpty(search))
             {
@@ -130,12 +149,12 @@ namespace AdminSystem.Web.Controllers
                     c.電話.Contains(search) ||
                     c.地址.Contains(search) ||
                     c.Email.Contains(search) ||
-                    c.客戶分類.Contains(search));
+                    c.客戶分類.ToString().Contains(search));
             }
 
             if (!string.IsNullOrEmpty(category) && category != "全部")
             {
-                query = query.Where(c => c.客戶分類 == category);
+                query = query.Where(c => c.客戶分類.ToString() == category);
             }
 
             // dynamic sort (requires System.Linq.Dynamic.Core)
@@ -162,7 +181,7 @@ namespace AdminSystem.Web.Controllers
                 worksheet.Cell(row, 4).Value = item.傳真;
                 worksheet.Cell(row, 5).Value = item.地址;
                 worksheet.Cell(row, 6).Value = item.Email;
-                worksheet.Cell(row, 7).Value = item.客戶分類;
+                worksheet.Cell(row, 7).Value = item.客戶分類.ToString();
                 row++;
             }
 

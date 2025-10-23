@@ -5,22 +5,27 @@ using Microsoft.AspNetCore.Mvc;
 using System.Linq.Expressions;
 using System.Linq.Dynamic.Core;
 using AdminSystem.Infrastructure.Repositories;
-using AdminSystem.Models;
+using AdminSystem.Domain;
+using AutoMapper;
+using AdminSystem.Domain.Entities;
+using System.Diagnostics.Contracts;
 
 namespace AdminSystem.Web.Controllers
 {
-    public class BanksController : Controller
+    public class BankController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
 
-        public BanksController(IUnitOfWork unitOfWork = null)
+        public BankController(IUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
         }
 
         public ActionResult Index(string search = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
         {
-            Expression<Func<BankViewModel, bool>>? filter = null;
+            Expression<Func<客戶銀行資訊, bool>>? filter = null;
             if (!string.IsNullOrEmpty(search))
             {
                 filter = b => 
@@ -31,28 +36,31 @@ namespace AdminSystem.Web.Controllers
                 b.帳戶號碼.ToString().Contains(search);
             }
 
-            Func<IQueryable<BankViewModel>, IOrderedQueryable<BankViewModel>> orderBy = q => q.OrderBy(sort + " " + order);
+            Func<IQueryable<客戶銀行資訊>, IOrderedQueryable<客戶銀行資訊>> orderBy = q => q.OrderBy(sort + " " + order);
             var banks = _unitOfWork.Banks.Get(filter, orderBy).ToList();
 
             ViewBag.Search = search;
             ViewBag.Sort = sort;
             ViewBag.Order = ((int)order + 1) % Enum.GetValues<Enums.Order>().Length;
-            ViewBag.Customers = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱");
+            ViewBag.Customers = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱");
             ViewData["Title"] = "Banks";
 
-            return View(banks);
+            var data = _mapper.Map<IEnumerable<BankViewModel>>(banks);
+
+            return View(data);
         }
 
         public ActionResult Details(int id)
         {
             var bank = _unitOfWork.Banks.GetById(id);
             if (bank == null) return NotFound();
-            return View(bank);
+            var data = _mapper.Map<BankViewModel>(bank);
+            return View(data);
         }
 
         public ActionResult Create()
         {
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱");
+            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱");
             return View();
         }
 
@@ -62,11 +70,12 @@ namespace AdminSystem.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                _unitOfWork.Banks.Insert(bank);
+                var data = _mapper.Map<客戶銀行資訊>(bank);
+                _unitOfWork.Banks.Insert(data);
                 _unitOfWork.Save();
                 return RedirectToAction("Index");
             }
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱", bank.客戶Id);
+            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", bank.客戶Id);
             return View(bank);
         }
 
@@ -74,8 +83,9 @@ namespace AdminSystem.Web.Controllers
         {
             var bank = _unitOfWork.Banks.GetById(id);
             if (bank == null) return NotFound();
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱", bank.客戶Id);
-            return View(bank);
+            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", bank.客戶id);
+            var data = _mapper.Map<BankViewModel>(bank);
+            return View(data);
         }
 
         [HttpPost]
@@ -84,11 +94,12 @@ namespace AdminSystem.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                _unitOfWork.Banks.Update(bank);
+                var data = _mapper.Map<客戶銀行資訊>(bank);
+                _unitOfWork.Banks.Update(data);
                 _unitOfWork.Save();
                 return RedirectToAction("Index");
             }
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱", bank.客戶Id);
+            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", bank.客戶Id);
             return View(bank);
         }
 
@@ -96,7 +107,8 @@ namespace AdminSystem.Web.Controllers
         {
             var bank = _unitOfWork.Banks.GetById(id);
             if (bank == null) return NotFound();
-            return View(bank);
+            var data = _mapper.Map<BankViewModel>(bank);
+            return View(data);
         }
 
         [HttpPost, ActionName("Delete")]
@@ -110,7 +122,7 @@ namespace AdminSystem.Web.Controllers
 
         public FileResult Export(string search = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
         {
-            Expression<Func<BankViewModel, bool>> filter = null;
+            Expression<Func<客戶銀行資訊, bool>> filter = null;
             if (!string.IsNullOrEmpty(search))
             {
                 filter = b =>
@@ -121,7 +133,7 @@ namespace AdminSystem.Web.Controllers
                 b.帳戶號碼.ToString().Contains(search);
             }
 
-            Func<IQueryable<BankViewModel>, IOrderedQueryable<BankViewModel>> orderBy = q => q.OrderBy(sort + " " + order);
+            Func<IQueryable<客戶銀行資訊>, IOrderedQueryable<客戶銀行資訊>> orderBy = q => q.OrderBy(sort + " " + order);
             var data = _unitOfWork.Banks.Get(filter, orderBy).ToList();
 
             using (var workbook = new XLWorkbook())

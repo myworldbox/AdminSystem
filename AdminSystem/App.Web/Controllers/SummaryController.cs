@@ -1,5 +1,6 @@
 ﻿using AdminSystem.Application.ViewModels;
 using AdminSystem.Infrastructure.Data;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AdminSystem.Web.Controllers
@@ -7,10 +8,12 @@ namespace AdminSystem.Web.Controllers
     public class SummaryController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
 
-        public SummaryController(AppDbContext context)
+        public SummaryController(AppDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         public IActionResult Index()
@@ -19,7 +22,9 @@ namespace AdminSystem.Web.Controllers
 
             ViewData["Title"] = "Summary";
 
-            return View(summaries);
+            var data = _mapper.Map<IEnumerable<SummaryViewModel>>(summaries);
+
+            return View(data);
         }
     }
 }

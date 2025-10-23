@@ -1,4 +1,4 @@
-using AdminSystem.Application.ViewModels;
+using AdminSystem.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace AdminSystem.Infrastructure.Data
@@ -9,14 +9,14 @@ namespace AdminSystem.Infrastructure.Data
         {
         }
 
-        public DbSet<InfoViewModel> 客戶資料 { get; set; }
-        public DbSet<ContactViewModel> 客戶聯絡人 { get; set; }
-        public DbSet<BankViewModel> 客戶銀行資訊 { get; set; }
-        public DbSet<SummaryViewModel> vw_CustomerSummary { get; set; }
+        public DbSet<客戶資料> 客戶資料 { get; set; }
+        public DbSet<客戶聯絡人> 客戶聯絡人 { get; set; }
+        public DbSet<客戶銀行資訊> 客戶銀行資訊 { get; set; }
+        public DbSet<VwCustomerSummary> vw_CustomerSummary { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<SummaryViewModel>(entity =>
+            modelBuilder.Entity<VwCustomerSummary>(entity =>
             {
                 entity.HasNoKey();
                 entity.ToView("vw_CustomerSummary");

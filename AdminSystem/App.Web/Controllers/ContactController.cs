@@ -5,17 +5,22 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Dynamic.Core;
 using AdminSystem.Infrastructure.Repositories;
-using AdminSystem.Models;
+using AdminSystem.Domain;
+using AdminSystem.Domain.Entities;
+using DocumentFormat.OpenXml.Office2021.DocumentTasks;
+using AutoMapper;
 
 namespace AdminSystem.Web.Controllers
 {
-    public class ContactsController : Controller
+    public class ContactController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
 
-        public ContactsController(IUnitOfWork unitOfWork)
+        public ContactController(IUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
         }
 
         public IActionResult Index(string search = "", string jobTitle = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
@@ -47,22 +52,25 @@ namespace AdminSystem.Web.Controllers
             ViewBag.Sort = sort;
             ViewBag.Order = ((int)order + 1) % Enum.GetValues<Enums.Order>().Length;
             ViewBag.JobTitles = new SelectList(_unitOfWork.Contacts.Get().Select(c => c.職稱).Distinct().ToList(), jobTitle);
-            ViewBag.Customers = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱");
+            ViewBag.Customers = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱");
             ViewData["Title"] = "Contacts";
 
-            return View(contacts);
+            var data = _mapper.Map<IEnumerable<ContactViewModel>>(contacts);
+
+            return View(data);
         }
 
         public IActionResult Details(int id)
         {
             var contact = _unitOfWork.Contacts.GetById(id);
             if (contact == null) return NotFound();
-            return View(contact);
+            var data = _mapper.Map<ContactViewModel>(contact);
+            return View(data);
         }
 
         public IActionResult Create()
         {
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱");
+            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱");
             return View();
         }
 
@@ -74,7 +82,8 @@ namespace AdminSystem.Web.Controllers
             {
                 try
                 {
-                    _unitOfWork.Contacts.Insert(contact);
+                    var data = _mapper.Map<客戶聯絡人>(contact);
+                    _unitOfWork.Contacts.Insert(data);
                     _unitOfWork.Save();
                     return RedirectToAction(nameof(Index));
                 }
@@ -87,7 +96,7 @@ namespace AdminSystem.Web.Controllers
                     ModelState.AddModelError("", $"無法保存資料：{ex.InnerException?.Message ?? ex.Message}");
                 }
             }
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱", contact.客戶Id);
+            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", contact.客戶Id);
             return View(contact);
         }
 
@@ -95,8 +104,9 @@ namespace AdminSystem.Web.Controllers
         {
             var contact = _unitOfWork.Contacts.GetById(id);
             if (contact == null) return NotFound();
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱", contact.客戶Id);
-            return View(contact);
+            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", contact.客戶id);
+            var data = _mapper.Map<ContactViewModel>(contact);
+            return View(data);
         }
 
         [HttpPost]
@@ -107,7 +117,8 @@ namespace AdminSystem.Web.Controllers
             {
                 try
                 {
-                    _unitOfWork.Contacts.Update(contact);
+                    var data = _mapper.Map<客戶聯絡人>(contact);
+                    _unitOfWork.Contacts.Update(data);
                     _unitOfWork.Save();
                     return RedirectToAction(nameof(Index));
                 }
@@ -120,7 +131,7 @@ namespace AdminSystem.Web.Controllers
                     ModelState.AddModelError("", $"無法保存資料：{ex.InnerException?.Message ?? ex.Message}");
                 }
             }
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Customers.Get(), "Id", "客戶名稱", contact.客戶Id);
+            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", contact.客戶Id);
             return View(contact);
         }
 
@@ -128,7 +139,8 @@ namespace AdminSystem.Web.Controllers
         {
             var contact = _unitOfWork.Contacts.GetById(id);
             if (contact == null) return NotFound();
-            return View(contact);
+            var data = _mapper.Map<ContactViewModel>(contact);
+            return View(data);
         }
 
         [HttpPost, ActionName("Delete")]

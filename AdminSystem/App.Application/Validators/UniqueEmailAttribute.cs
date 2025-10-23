@@ -16,7 +16,7 @@ namespace AdminSystem.Application.Validators
                 return ValidationResult.Success;
 
             var exists = dbContext.客戶聯絡人
-                .Any(c => c.客戶Id == model.客戶Id && c.Email == model.Email && c.Id != model.Id);
+                .Any(c => c.客戶id == model.客戶Id && c.Email == model.Email && c.Id != model.Id);
 
             return exists
                 ? new ValidationResult("同客戶下Email不能重複")
