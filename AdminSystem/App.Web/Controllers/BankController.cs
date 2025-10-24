@@ -49,6 +49,11 @@ namespace AdminSystem.Web.Controllers
 
             _cache.Set(cacheKey, data, TimeSpan.FromMinutes(10));
 
+            if (ViewBag.CacheKey != null)
+            {
+                _cache.Remove(ViewBag.CacheKey);
+            }
+
             ViewBag.Search = search;
             ViewBag.Sort = sort;
             ViewBag.Order = ((int)order + 1) % Enum.GetValues<Enums.Order>().Length;

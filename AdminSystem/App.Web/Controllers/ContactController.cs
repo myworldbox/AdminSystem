@@ -53,9 +53,15 @@ namespace AdminSystem.Web.Controllers
             var contacts = query.ToList();
 
             var data = _mapper.Map<IEnumerable<ContactViewModel>>(contacts);
+
             var cacheKey = Guid.NewGuid().ToString();
 
             _cache.Set(cacheKey, data, TimeSpan.FromMinutes(10));
+
+            if (ViewBag.CacheKey != null)
+            {
+                _cache.Remove(ViewBag.CacheKey);
+            }
 
             ViewBag.Search = search;
             ViewBag.JobTitle = jobTitle;

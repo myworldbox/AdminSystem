@@ -55,6 +55,11 @@ namespace AdminSystem.Web.Controllers
 
             _cache.Set(cacheKey, data, TimeSpan.FromMinutes(10));
 
+            if (ViewBag.CacheKey != null)
+            {
+                _cache.Remove(ViewBag.CacheKey);
+            }
+
             ViewBag.Search = search;
             ViewBag.Category = category;
             ViewBag.Sort = sort;
