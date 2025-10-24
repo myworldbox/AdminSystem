@@ -6,11 +6,14 @@
 
 <p>
     @Html.ActionLink("新增客戶", "Create", null, new { @class = "btn btn-primary" })
+    @*
+    @Html.ActionLink("匯出 Excel", "Export", new { CacheKey = ViewBag.CacheKey }, new { @class = "btn btn-success" })
+    *@
 </p>
 
-@using (Html.BeginForm("Export", "Info", FormMethod.Post))
+@using (Html.BeginForm("Export", "Info", FormMethod.Get))
 {
-    @Html.Hidden("data", JsonSerializer.Serialize(Model))
+    @Html.Hidden("cacheKey", (string)ViewBag.CacheKey)
     <button type="submit" class="btn btn-success">匯出 Excel</button>
 }
 

@@ -10,6 +10,8 @@ using AutoMapper;
 using AdminSystem.Domain.Entities;
 using System.Diagnostics.Contracts;
 using System.Text.Json;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.VisualBasic;
 
 namespace AdminSystem.Web.Controllers
 {
@@ -17,11 +19,13 @@ namespace AdminSystem.Web.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly IMemoryCache _cache;
 
-        public BankController(IUnitOfWork unitOfWork, IMapper mapper)
+        public BankController(IUnitOfWork unitOfWork, IMapper mapper, IMemoryCache cache)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _cache = cache;
         }
 
         public ActionResult Index(string search = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
@@ -40,13 +44,17 @@ namespace AdminSystem.Web.Controllers
             Func<IQueryable<客戶銀行資訊>, IOrderedQueryable<客戶銀行資訊>> orderBy = q => q.OrderBy(sort + " " + order);
             var banks = _unitOfWork.Banks.Get(filter, orderBy).ToList();
 
+            var data = _mapper.Map<IEnumerable<BankViewModel>>(banks);
+            var cacheKey = Guid.NewGuid().ToString();
+
+            _cache.Set(cacheKey, data, TimeSpan.FromMinutes(10));
+
             ViewBag.Search = search;
             ViewBag.Sort = sort;
             ViewBag.Order = ((int)order + 1) % Enum.GetValues<Enums.Order>().Length;
             ViewBag.Customers = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱");
+            ViewBag.CacheKey = cacheKey;
             ViewData["Title"] = "Bank";
-
-            var data = _mapper.Map<IEnumerable<BankViewModel>>(banks);
 
             return View(data);
         }
@@ -121,10 +129,10 @@ namespace AdminSystem.Web.Controllers
             return RedirectToAction("Index");
         }
 
-        [HttpPost]
-        public FileResult Export(string data)
+        public FileResult Export(string cacheKey)
         {
-            var bank = JsonSerializer.Deserialize<IEnumerable<BankViewModel>>(data);
+            var bank = _cache.Get<IEnumerable<BankViewModel>>(cacheKey);
+
             using (var workbook = new XLWorkbook())
             {
                 var worksheet = workbook.Worksheets.Add("客戶銀行資訊");

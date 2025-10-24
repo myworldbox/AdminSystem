@@ -6,6 +6,7 @@ using AutoMapper;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Caching.Memory;
 using System.Linq.Dynamic.Core;
 using System.Text.Json;
 
@@ -15,11 +16,13 @@ namespace AdminSystem.Web.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly IMemoryCache _cache;
 
-        public InfoController(IUnitOfWork unitOfWork, IMapper mapper)
+        public InfoController(IUnitOfWork unitOfWork, IMapper mapper, IMemoryCache cache)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _cache = cache;
         }
 
         public IActionResult Index(string search = "", string sort = "Id", Enums.Order order = Enums.Order.asc, Enums.Category? category = null)
@@ -45,7 +48,12 @@ namespace AdminSystem.Web.Controllers
             // dynamic sort (requires System.Linq.Dynamic.Core)
             query = query.OrderBy($"{sort} {order}");
 
-           var infos = query.ToList();   // should now work
+           var infos = query.ToList();
+
+            var data = _mapper.Map<IEnumerable<InfoViewModel>>(infos);
+            var cacheKey = Guid.NewGuid().ToString();
+
+            _cache.Set(cacheKey, data, TimeSpan.FromMinutes(10));
 
             ViewBag.Search = search;
             ViewBag.Category = category;
@@ -61,9 +69,8 @@ namespace AdminSystem.Web.Controllers
                 "Text",
                 category
             );
+            ViewBag.CacheKey = cacheKey;
             ViewData["Title"] = "Info";
-
-            var data = _mapper.Map<IEnumerable<InfoViewModel>>(infos);
 
             return View(data);
         }
@@ -138,9 +145,9 @@ namespace AdminSystem.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        public FileResult Export(string data)
+        public FileResult Export(string cacheKey)
         {
-            var info = JsonSerializer.Deserialize<IEnumerable<InfoViewModel>>(data);
+            var info = _cache.Get<IEnumerable<InfoViewModel>>(cacheKey);
 
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("客戶資料");

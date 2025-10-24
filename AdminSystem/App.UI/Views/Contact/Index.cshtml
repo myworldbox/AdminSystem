@@ -8,9 +8,9 @@
     @Html.ActionLink("新增聯絡人", "Create", null, new { @class = "btn btn-primary" })
 </p>
 
-@using (Html.BeginForm("Export", "Contact", FormMethod.Post))
+@using (Html.BeginForm("Export", "Contact", FormMethod.Get))
 {
-    @Html.Hidden("data", JsonSerializer.Serialize(Model))
+    @Html.Hidden("cacheKey", (string)ViewBag.CacheKey)
     <button type="submit" class="btn btn-success">匯出 Excel</button>
 }
 

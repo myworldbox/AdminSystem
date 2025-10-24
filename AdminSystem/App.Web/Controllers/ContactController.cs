@@ -4,10 +4,12 @@ using AdminSystem.Domain.Entities;
 using AdminSystem.Infrastructure.Repositories;
 using AutoMapper;
 using ClosedXML.Excel;
+using DocumentFormat.OpenXml.EMMA;
 using DocumentFormat.OpenXml.Office2021.DocumentTasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using System.Linq.Dynamic.Core;
 using System.Text.Json;
 
@@ -17,11 +19,13 @@ namespace AdminSystem.Web.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly IMemoryCache _cache;
 
-        public ContactController(IUnitOfWork unitOfWork, IMapper mapper)
+        public ContactController(IUnitOfWork unitOfWork, IMapper mapper, IMemoryCache cache)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _cache = cache;
         }
 
         public IActionResult Index(string search = "", string jobTitle = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
@@ -48,15 +52,19 @@ namespace AdminSystem.Web.Controllers
 
             var contacts = query.ToList();
 
+            var data = _mapper.Map<IEnumerable<ContactViewModel>>(contacts);
+            var cacheKey = Guid.NewGuid().ToString();
+
+            _cache.Set(cacheKey, data, TimeSpan.FromMinutes(10));
+
             ViewBag.Search = search;
             ViewBag.JobTitle = jobTitle;
             ViewBag.Sort = sort;
             ViewBag.Order = ((int)order + 1) % Enum.GetValues<Enums.Order>().Length;
             ViewBag.JobTitles = new SelectList(_unitOfWork.Contacts.Get().Select(c => c.職稱).Distinct().ToList(), jobTitle);
             ViewBag.Customers = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱");
+            ViewBag.CacheKey = cacheKey;
             ViewData["Title"] = "Contact";
-
-            var data = _mapper.Map<IEnumerable<ContactViewModel>>(contacts);
 
             return View(data);
         }
@@ -161,9 +169,9 @@ namespace AdminSystem.Web.Controllers
             }
         }
 
-        public IActionResult Export(string data)
+        public IActionResult Export(string cacheKey)
         {
-            var contact = JsonSerializer.Deserialize<IEnumerable<ContactViewModel>>(data);
+            var contact = _cache.Get<IEnumerable<ContactViewModel>>(cacheKey);
 
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("客戶聯絡人");
