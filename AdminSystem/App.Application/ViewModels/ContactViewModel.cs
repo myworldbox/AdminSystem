@@ -21,7 +21,7 @@ namespace AdminSystem.Application.ViewModels
         public string Email { get; set; }
         [PhoneFormat]
         public string? 手機 { get; set; }
-        [StringLength(50)]
+        [PhoneFormat]
         public string? 電話 { get; set; }
         public bool 是否已刪除 { get; set; }
 

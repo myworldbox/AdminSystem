@@ -54,8 +54,22 @@ namespace AdminSystem.Infrastructure.Repositories
             var entity = DbSet.Find(id);
             if (entity == null) return;
 
+            // Mark root entity
             var prop = Context.Entry(entity).Property("是否已刪除");
             if (prop != null) prop.CurrentValue = true;
+
+            // Example: if TEntity has a collection navigation "Children"
+            var navigation = Context.Entry(entity).Collections;
+            foreach (var nav in navigation)
+            {
+                nav.Load(); // ensure related entities are loaded
+                foreach (var child in (IEnumerable<object>)nav.CurrentValue!)
+                {
+                    var childProp = Context.Entry(child).Property("是否已刪除");
+                    if (childProp != null) childProp.CurrentValue = true;
+                }
+            }
         }
+
     }
 }

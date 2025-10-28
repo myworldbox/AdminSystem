@@ -1,3 +1,4 @@
+using AdminSystem.Application.Validators;
 using AdminSystem.Domain;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -20,9 +21,11 @@ namespace AdminSystem.Application.ViewModels
         [StringLength(8, MinimumLength = 8, ErrorMessage = "必須為8碼數字")]
         [RegularExpression(@"\d{8}", ErrorMessage = "必須為8位數字")]
         public string 統一編號 { get; set; }
-        [StringLength(50)]
+        [Required(ErrorMessage = "必填")]
+        [PhoneFormat]
         public string 電話 { get; set; }
         [StringLength(50)]
+        [RegularExpression(@"^\d{6,15}$", ErrorMessage = "傳真必須為6-15位數字")]
         public string? 傳真 { get; set; }
         [StringLength(100)]
         public string? 地址 { get; set; }

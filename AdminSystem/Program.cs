@@ -2,8 +2,10 @@ using AdminSystem.Application.Helpers;
 using AdminSystem.Application.ViewModels;
 using AdminSystem.Infrastructure.Data;
 using AdminSystem.Infrastructure.Repositories;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +35,16 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddAutoMapper(config => config.AddProfile<MappingHelper>());
 
 var app = builder.Build();
+
+var defaultCulture = new CultureInfo("zh-CN"); // ©Î "zh-TW"
+var localizationOptions = new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(defaultCulture),
+    SupportedCultures = new List<CultureInfo> { defaultCulture },
+    SupportedUICultures = new List<CultureInfo> { defaultCulture }
+};
+
+app.UseRequestLocalization(localizationOptions);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
