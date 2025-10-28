@@ -1,0 +1,33 @@
+-- Step 1: Connect to CDB (NOT PDB)
+-- sqlplus system/your_password@localhost:1521/XE
+
+-- Step 2: Switch to PDB
+ALTER SESSION SET CONTAINER = XEPDB1;
+
+-- Step 3: CONFIRM you're in XEPDB1
+SHOW CON_NAME;
+-- MUST SAY: XEPDB1
+-- If it says CDB$ROOT → YOU ARE IN WRONG PLACE
+
+-- Step 4: Create user (if not exists)
+CREATE USER mytestbox IDENTIFIED BY "1234mtb1234"
+  DEFAULT TABLESPACE USERS
+  TEMPORARY TABLESPACE TEMP
+  QUOTA UNLIMITED ON USERS;
+
+-- Step 5: GRANT CREATE SESSION *INSIDE* XEPDB1
+GRANT CREATE SESSION TO mytestbox;
+
+-- Step 6: Other privileges
+GRANT CONNECT TO mytestbox;
+GRANT CREATE TABLE TO mytestbox;
+GRANT CREATE VIEW TO mytestbox;
+GRANT CREATE SEQUENCE TO mytestbox;
+GRANT CREATE INDEX TO mytestbox;
+
+-- Step 7: Confirm grant took effect
+SELECT GRANTEE, PRIVILEGE 
+FROM DBA_SYS_PRIVS 
+WHERE GRANTEE = 'MYTESTBOX' 
+  AND PRIVILEGE = 'CREATE SESSION';
+-- Should return 1 row

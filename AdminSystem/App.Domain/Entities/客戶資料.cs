@@ -1,38 +1,49 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace AdminSystem.Domain.Entities;
 
-[Table("客戶資料")]
+[Table("CUSTOMERS")]
 public partial class 客戶資料
 {
     [Key]
+    [Column("ID")]
     public int Id { get; set; }
 
+    [Column("NAME")]
     [StringLength(50)]
+    [Required]
     public string 客戶名稱 { get; set; } = null!;
 
+    [Column("TAX_ID")]
     [StringLength(8)]
     [Unicode(false)]
+    [Required]
     public string 統一編號 { get; set; } = null!;
 
+    [Column("PHONE")]
     [StringLength(50)]
+    [Required]
     public string 電話 { get; set; } = null!;
 
+    [Column("FAX")]
     [StringLength(50)]
     public string? 傳真 { get; set; }
 
+    [Column("ADDRESS")]
     [StringLength(100)]
     public string? 地址 { get; set; }
 
+    [Column("EMAIL")]
     [StringLength(250)]
     public string? Email { get; set; }
 
-    public bool 是否已刪除 { get; set; }
+    [Column("IS_DELETED", TypeName = "NUMBER(1)")]
+    public int 是否已刪除 { get; set; }
 
+    [Column("CATEGORY")]
     [StringLength(50)]
     public string? 客戶分類 { get; set; }
 
