@@ -26,9 +26,33 @@ builder.Services.AddControllersWithViews()
         options.ViewLocationFormats.Add("App.UI/Views/Shared/{0}.cshtml");
     });
 
-builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("MSSQL.AppDbContext")));
-// builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQL.AppDbContext")));
-// builder.Services.AddDbContext<AppDbContext>(options => options.UseMySql(builder.Configuration.GetConnectionString("MySQL.AppDbContext"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("MySQL.AppDbContext"))));
+var provider = builder.Configuration["AppDbContext"];
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    switch (provider)
+    {
+        case "PostgreSQL":
+            options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQL.AppDbContext"));
+            break;
+        case "MSSQL":
+            options.UseSqlServer(builder.Configuration.GetConnectionString("MSSQL.AppDbContext"));
+            break;
+        case "MySQL":
+            options.UseMySql(
+                builder.Configuration.GetConnectionString("MySQL.AppDbContext"),
+                ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("MySQL.AppDbContext")));
+            break;
+        case "Oracle":
+            options.UseOracle(builder.Configuration.GetConnectionString("Oracle.AppDbContext"));
+            break;
+        case "SQLite":
+            options.UseSqlite(builder.Configuration.GetConnectionString("SQLite.AppDbContext"));
+            break;
+        default:
+            throw new Exception("Unsupported database provider");
+    }
+});
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
