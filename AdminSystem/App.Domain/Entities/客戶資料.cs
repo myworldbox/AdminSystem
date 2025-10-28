@@ -40,8 +40,8 @@ public partial class 客戶資料
     [StringLength(250)]
     public string? Email { get; set; }
 
-    [Column("IS_DELETED", TypeName = "NUMBER(1)")]
-    public int 是否已刪除 { get; set; }
+    [Column("IS_DELETED")]
+    public bool 是否已刪除 { get; set; }
 
     [Column("CATEGORY")]
     [StringLength(50)]

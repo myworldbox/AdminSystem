@@ -37,8 +37,8 @@ public partial class 客戶聯絡人
     [StringLength(50)]
     public string? 電話 { get; set; }
 
-    [Column("IS_DELETED", TypeName = "NUMBER(1)")]
-    public int 是否已刪除 { get; set; }
+    [Column("IS_DELETED")]
+    public bool 是否已刪除 { get; set; }
 
     [ForeignKey(nameof(客戶Id))]
     [InverseProperty(nameof(客戶資料.客戶聯絡人s))]

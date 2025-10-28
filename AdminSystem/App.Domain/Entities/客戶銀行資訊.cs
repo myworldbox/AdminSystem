@@ -35,8 +35,8 @@ public partial class 客戶銀行資訊
     [Required]
     public string 帳戶號碼 { get; set; } = null!;
 
-    [Column("IS_DELETED", TypeName = "NUMBER(1)")]
-    public int 是否已刪除 { get; set; }
+    [Column("IS_DELETED")]
+    public bool 是否已刪除 { get; set; }
 
     [ForeignKey(nameof(客戶Id))]
     [InverseProperty(nameof(客戶資料.客戶銀行資訊s))]
