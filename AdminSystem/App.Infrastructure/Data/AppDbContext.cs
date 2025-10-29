@@ -24,17 +24,93 @@ namespace AdminSystem.Infrastructure.Data
                 v => v == 1       // int → bool
             );
 
-            modelBuilder.Entity<客戶資料>()
-                .Property(e => e.是否已刪除)
-                .HasConversion(boolToIntConverter);
+            var config = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json")
+                .Build();
 
-            modelBuilder.Entity<客戶聯絡人>()
-                .Property(e => e.是否已刪除)
-                .HasConversion(boolToIntConverter);
+            string connectionString = config["AppDbContext"];
 
-            modelBuilder.Entity<客戶銀行資訊>()
-                .Property(e => e.是否已刪除)
-                .HasConversion(boolToIntConverter);
+            switch (connectionString)
+            {
+                case "PostgreSQL":
+                    break;
+                case "MSSQL":
+                    break;
+                case "MySQL":
+                    break;
+                case "Oracle":
+                    modelBuilder.Entity<客戶資料>(entity =>
+                    {
+                        entity.ToTable("CUSTOMERS");
+
+                        entity.Property(e => e.Id).HasColumnName("ID");
+                        entity.Property(e => e.客戶名稱).HasColumnName("NAME").HasMaxLength(50).IsRequired();
+                        entity.Property(e => e.統一編號).HasColumnName("TAX_ID").HasMaxLength(8).IsUnicode(false).IsRequired();
+                        entity.Property(e => e.電話).HasColumnName("PHONE").HasMaxLength(50).IsRequired();
+                        entity.Property(e => e.傳真).HasColumnName("FAX").HasMaxLength(50);
+                        entity.Property(e => e.地址).HasColumnName("ADDRESS").HasMaxLength(100);
+                        entity.Property(e => e.Email).HasColumnName("EMAIL").HasMaxLength(250);
+                        entity.Property(e => e.是否已刪除).HasColumnName("IS_DELETED").HasConversion(boolToIntConverter);
+                        entity.Property(e => e.客戶分類).HasColumnName("CATEGORY").HasMaxLength(50);
+
+                        entity.HasMany(e => e.客戶聯絡人s)
+                              .WithOne(e => e.客戶)
+                              .HasForeignKey(e => e.客戶Id)
+                              .OnDelete(DeleteBehavior.Cascade);
+
+                        entity.HasMany(e => e.客戶銀行資訊s)
+                              .WithOne(e => e.客戶)
+                              .HasForeignKey(e => e.客戶Id)
+                              .OnDelete(DeleteBehavior.Cascade);
+                    });
+
+                    modelBuilder.Entity<客戶聯絡人>(entity =>
+                    {
+                        entity.ToTable("CUSTOMER_CONTACTS");
+
+                        entity.HasIndex(e => e.客戶Id).HasDatabaseName("IX_CONTACTS_CUSTOMERID");
+
+                        entity.Property(e => e.Id).HasColumnName("ID");
+                        entity.Property(e => e.客戶Id).HasColumnName("CUSTOMER_ID");
+                        entity.Property(e => e.職稱).HasColumnName("TITLE").HasMaxLength(50);
+                        entity.Property(e => e.姓名).HasColumnName("NAME").HasMaxLength(50).IsRequired();
+                        entity.Property(e => e.Email).HasColumnName("EMAIL").HasMaxLength(250).IsRequired();
+                        entity.Property(e => e.手機).HasColumnName("MOBILE").HasMaxLength(50);
+                        entity.Property(e => e.電話).HasColumnName("PHONE").HasMaxLength(50);
+                        entity.Property(e => e.是否已刪除).HasColumnName("IS_DELETED").HasConversion(boolToIntConverter);
+
+                        entity.HasOne(d => d.客戶)
+                              .WithMany(p => p.客戶聯絡人s)
+                              .HasForeignKey(d => d.客戶Id)
+                              .OnDelete(DeleteBehavior.Cascade)
+                              .HasConstraintName("FK_CUSTOMER_CONTACTS_CUSTOMER");
+                    });
+
+                    modelBuilder.Entity<客戶銀行資訊>(entity =>
+                    {
+                        entity.ToTable("CUSTOMER_BANK_INFOS");
+
+                        entity.Property(e => e.Id).HasColumnName("ID");
+                        entity.Property(e => e.客戶Id).HasColumnName("CUSTOMER_ID");
+                        entity.Property(e => e.銀行名稱).HasColumnName("BANK_NAME").HasMaxLength(50).IsRequired();
+                        entity.Property(e => e.銀行代碼).HasColumnName("BANK_CODE");
+                        entity.Property(e => e.分行代碼).HasColumnName("BRANCH_CODE");
+                        entity.Property(e => e.帳戶名稱).HasColumnName("ACCOUNT_NAME").HasMaxLength(50).IsRequired();
+                        entity.Property(e => e.帳戶號碼).HasColumnName("ACCOUNT_NUMBER").HasMaxLength(20).IsRequired();
+                        entity.Property(e => e.是否已刪除).HasColumnName("IS_DELETED").HasConversion(boolToIntConverter);
+
+                        entity.HasOne(d => d.客戶)
+                              .WithMany(p => p.客戶銀行資訊s)
+                              .HasForeignKey(d => d.客戶Id)
+                              .OnDelete(DeleteBehavior.Cascade)
+                              .HasConstraintName("FK_CUSTOMER_BANK_INFOS_CUSTOMER");
+                    });
+                    break;
+                case "SQLite":
+                    break;
+                default:
+                    throw new Exception("Unsupported database provider");
+            }
 
             modelBuilder.Entity<VwCustomerSummary>(entity =>
             {
