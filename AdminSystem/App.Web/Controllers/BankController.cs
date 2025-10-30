@@ -97,7 +97,7 @@ namespace AdminSystem.Web.Controllers
         {
             var bank = _unitOfWork.Banks.GetById(id);
             if (bank == null) return NotFound();
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", bank.客戶id);
+            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", bank.客戶Id);
             var data = _mapper.Map<BankViewModel>(bank);
             return View(data);
         }

@@ -119,7 +119,7 @@ namespace AdminSystem.Web.Controllers
         {
             var contact = _unitOfWork.Contacts.GetById(id);
             if (contact == null) return NotFound();
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", contact.客戶id);
+            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", contact.客戶Id);
             var data = _mapper.Map<ContactViewModel>(contact);
             return View(data);
         }

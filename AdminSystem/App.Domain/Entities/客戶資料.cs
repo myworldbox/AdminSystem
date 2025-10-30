@@ -1,25 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace AdminSystem.Domain.Entities;
 
-[Table("客戶資料")]
 public partial class 客戶資料
 {
     [Key]
     public int Id { get; set; }
 
     [StringLength(50)]
+    [Required]
     public string 客戶名稱 { get; set; } = null!;
 
     [StringLength(8)]
     [Unicode(false)]
+    [Required]
     public string 統一編號 { get; set; } = null!;
 
     [StringLength(50)]
+    [Required]
     public string 電話 { get; set; } = null!;
 
     [StringLength(50)]
@@ -36,7 +37,6 @@ public partial class 客戶資料
     [StringLength(50)]
     public string? 客戶分類 { get; set; }
 
-    [InverseProperty("客戶")]
     public virtual ICollection<客戶聯絡人> 客戶聯絡人s { get; set; } = new List<客戶聯絡人>();
 
     [InverseProperty("客戶")]

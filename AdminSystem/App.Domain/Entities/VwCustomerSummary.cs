@@ -9,6 +9,7 @@ namespace AdminSystem.Domain.Entities;
 [Keyless]
 public partial class VwCustomerSummary
 {
+    [Column("ID")]
     public int Id { get; set; }
 
     [StringLength(50)]
