@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using System.Globalization;
+using static AdminSystem.Domain.Enums;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,30 +28,30 @@ builder.Services.AddControllersWithViews()
     });
 
 var provider = builder.Configuration["AppDbContext"];
+string dbContext = $"{provider}.AppDbContext";
+Database db = (Database)Enum.Parse(typeof(Database), provider, ignoreCase: true);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    switch (provider)
+    switch (db)
     {
-        case "PostgreSQL":
-            options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQL.AppDbContext"));
+        case Database.PostgreSQL:
+            options.UseNpgsql(builder.Configuration.GetConnectionString(dbContext));
             break;
-        case "MSSQL":
-            options.UseSqlServer(builder.Configuration.GetConnectionString("MSSQL.AppDbContext"));
+        case Database.SqlServer:
+            options.UseSqlServer(builder.Configuration.GetConnectionString(dbContext));
             break;
-        case "MySQL":
+        case Database.MySQL:
             options.UseMySql(
-                builder.Configuration.GetConnectionString("MySQL.AppDbContext"),
-                ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("MySQL.AppDbContext")));
+                builder.Configuration.GetConnectionString(dbContext),
+                ServerVersion.AutoDetect(builder.Configuration.GetConnectionString(dbContext)));
             break;
-        case "Oracle":
-            options.UseOracle(builder.Configuration.GetConnectionString("Oracle.AppDbContext"));
+        case Database.Oracle:
+            options.UseOracle(builder.Configuration.GetConnectionString(dbContext));
             break;
-        case "SQLite":
-            options.UseSqlite(builder.Configuration.GetConnectionString("SQLite.AppDbContext"));
+        case Database.SQLite:
+            options.UseSqlite(builder.Configuration.GetConnectionString(dbContext));
             break;
-        default:
-            throw new Exception("Unsupported database provider");
     }
 });
 

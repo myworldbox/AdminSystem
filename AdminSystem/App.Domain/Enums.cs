@@ -14,5 +14,47 @@
             asc,
             desc
         }
+
+        public enum Database
+        {
+            // Relational Databases (SQL)
+            SqlServer,
+            PostgreSQL,
+            MySQL,
+            MariaDB,
+            Oracle,
+            SQLite,
+            IBMDb2,
+            Firebird,
+            SAPHana,
+            Teradata,
+            Sybase,
+
+            // NoSQL Databases
+            MongoDB,
+            Cassandra,
+            Couchbase,
+            Redis,
+            Neo4j,
+            DynamoDB,
+            CosmosDB,
+            ArangoDB,
+            RavenDB,
+            OrientDB,
+            InfluxDB,
+            FaunaDB,
+            Firebase,
+            Firestore,
+
+            // Cloud/Hybrid Databases
+            AmazonAurora,
+            GoogleCloudSpanner,
+            AzureSQL,
+            AzureCosmosDB,
+            PlanetScale,
+            YugabyteDB,
+            TiDB
+        }
+
     }
 }
