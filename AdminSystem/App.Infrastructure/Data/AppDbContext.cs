@@ -1,6 +1,8 @@
+using AdminSystem.Domain;
 using AdminSystem.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using static AdminSystem.Domain.Enums;
 
 namespace AdminSystem.Infrastructure.Data
 {
@@ -29,16 +31,17 @@ namespace AdminSystem.Infrastructure.Data
                 .Build();
 
             string connectionString = config["AppDbContext"];
+            Database db = (Database)Enum.Parse(typeof(Database), connectionString, ignoreCase: true);
 
-            switch (connectionString)
+            switch (db)
             {
-                case "PostgreSQL":
+                case Enums.Database.PostgreSQL:
                     break;
-                case "MSSQL":
+                case Enums.Database.SqlServer:
                     break;
-                case "MySQL":
+                case Enums.Database.MySQL:
                     break;
-                case "Oracle":
+                case Enums.Database.Oracle:
                     modelBuilder.Entity<客戶資料>(entity =>
                     {
                         entity.ToTable("CUSTOMERS");
@@ -106,7 +109,7 @@ namespace AdminSystem.Infrastructure.Data
                               .HasConstraintName("FK_CUSTOMER_BANK_INFOS_CUSTOMER");
                     });
                     break;
-                case "SQLite":
+                case Enums.Database.SQLite:
                     break;
                 default:
                     throw new Exception("Unsupported database provider");

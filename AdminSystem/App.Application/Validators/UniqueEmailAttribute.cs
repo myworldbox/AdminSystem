@@ -1,26 +1,23 @@
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using AdminSystem.Application.ViewModels;
-using AdminSystem.Infrastructure.Data;
+using AdminSystem.Domain.Entities;
+using AdminSystem.Infrastructure.Repositories;
+using System.ComponentModel.DataAnnotations;
 
-namespace AdminSystem.Application.Validators
+public class UniqueEmailAttribute : ValidationAttribute
 {
-    public class UniqueEmailAttribute : ValidationAttribute
+    protected override ValidationResult? IsValid(object value, ValidationContext validationContext)
     {
-        protected override ValidationResult? IsValid(object value, ValidationContext validationContext)
-        {
-            var model = validationContext.ObjectInstance as ContactViewModel;
-            var dbContext = validationContext.GetService<AppDbContext>();
+        var model = validationContext.ObjectInstance as ContactViewModel;
+        var unitOfWork = validationContext.GetService<IUnitOfWork>();
 
-            if (model == null || dbContext == null || string.IsNullOrEmpty(model.Email))
-                return ValidationResult.Success;
+        if (model == null || unitOfWork == null || unitOfWork.Contacts == null || string.IsNullOrEmpty(model.Email))
+            return ValidationResult.Success;
 
-            var exists = dbContext.客戶聯絡人
-                .Any(c => c.客戶Id == model.客戶Id && c.Email == model.Email && c.Id != model.Id);
+        var exists = unitOfWork.Contacts.Get()
+               .Any(c => c.客戶Id == model.客戶Id && c.Email == model.Email && c.Id != model.Id);
 
-            return exists
-                ? new ValidationResult("同客戶下Email不能重複")
-                : ValidationResult.Success;
-        }
+        return exists
+            ? new ValidationResult("同客戶下Email不能重複")
+            : ValidationResult.Success;
     }
 }
