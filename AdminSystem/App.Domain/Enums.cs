@@ -15,6 +15,14 @@
             desc
         }
 
+        public enum Role
+        {
+            Clerk,
+            Supervisor,
+            Manager,
+            Admin
+        }
+
         public enum Database
         {
             // Relational Databases (SQL)
