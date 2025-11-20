@@ -11,17 +11,24 @@ namespace AdminSystem.App.Infrastructure.Data
 {
     public class MockDataSeed
     {
+
+        /*
         private readonly UserManager<IdentityUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        */
         private readonly AppDbContext _context;
 
         public MockDataSeed(
+            /*
             UserManager<IdentityUser> userManager,
             RoleManager<IdentityRole> roleManager,
+            */
             AppDbContext context)
         {
+            /*
             _userManager = userManager;
             _roleManager = roleManager;
+            */
             _context = context;
         }
 
@@ -31,6 +38,7 @@ namespace AdminSystem.App.Infrastructure.Data
             await SeedCustomerDataPureEfCoreAsync();
         }
 
+        /*
         private async Task SeedIdentityAsync()
         {
             // ── Your original Identity seeding (unchanged) ──
@@ -63,25 +71,14 @@ namespace AdminSystem.App.Infrastructure.Data
                 }
             }
         }
+        */
 
         private async Task SeedCustomerDataPureEfCoreAsync()
         {
-            // If already seeded → exit
-            if (await _context.客戶資料.AnyAsync()) return;
-
             // 1. Delete everything (EF Core 7+ bulk delete – no SQL)
             await _context.客戶銀行資訊.ExecuteDeleteAsync();
             await _context.客戶聯絡人.ExecuteDeleteAsync();
             await _context.客戶資料.ExecuteDeleteAsync();
-
-            // 2. Reset Identity (PostgreSQL) WITHOUT raw SQL
-            // EF Core 7.0+ supports this natively via HiLo override trick
-            await _context.Database.ExecuteSqlInterpolatedAsync(
-                $"SELECT setval(pg_get_serial_sequence('\"客戶資料\"', 'Id'), 1, false)");
-            await _context.Database.ExecuteSqlInterpolatedAsync(
-                $"SELECT setval(pg_get_serial_sequence('\"客戶聯絡人\"', 'Id'), 1, false)");
-            await _context.Database.ExecuteSqlInterpolatedAsync(
-                $"SELECT setval(pg_get_serial_sequence('\"客戶銀行資訊\"', 'Id'), 1, false)");
 
             // Alternative (100% no SQL at all): Just insert with explicit Id = 1,2,3...
             // This is actually cleaner and truly raw-SQL-free:
@@ -126,6 +123,10 @@ namespace AdminSystem.App.Infrastructure.Data
                 new 客戶銀行資訊 { Id = 9,  客戶Id = 9,  銀行名稱 = "國泰世華",   銀行代碼 = 013, 分行代碼 = 009, 帳戶名稱 = "測試帳戶9", 帳戶號碼 = "999900001111" },
                 new 客戶銀行資訊 { Id = 10, 客戶Id = 10, 銀行名稱 = "兆豐銀行",   銀行代碼 = 017, 分行代碼 = 010, 帳戶名稱 = "測試帳戶10",帳戶號碼 = "222233334444" }
             };
+
+            customers.ForEach(c => _context.Entry(c).State = EntityState.Added);
+            contacts.ForEach(c => _context.Entry(c).State = EntityState.Added);
+            banks.ForEach(b => _context.Entry(b).State = EntityState.Added);
 
             _context.客戶資料.AddRange(customers);
             _context.客戶聯絡人.AddRange(contacts);

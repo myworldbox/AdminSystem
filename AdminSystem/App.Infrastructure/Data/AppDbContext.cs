@@ -35,12 +35,6 @@ namespace AdminSystem.Infrastructure.Data
 
             switch (db)
             {
-                case Enums.Database.PostgreSQL:
-                    break;
-                case Enums.Database.SqlServer:
-                    break;
-                case Enums.Database.MySQL:
-                    break;
                 case Enums.Database.Oracle:
                     modelBuilder.Entity<客戶資料>(entity =>
                     {
@@ -109,7 +103,22 @@ namespace AdminSystem.Infrastructure.Data
                               .HasConstraintName("FK_CUSTOMER_BANK_INFOS_CUSTOMER");
                     });
                     break;
+                case Enums.Database.PostgreSQL:
+                case Enums.Database.SqlServer:
+                case Enums.Database.MySQL:
                 case Enums.Database.SQLite:
+                    // 讓這三個實體的 Id 可以手動指定（關鍵！）
+                    modelBuilder.Entity<客戶資料>()
+                        .Property(c => c.Id)
+                        .ValueGeneratedOnAdd();                    // 正常情況自動產生
+
+                    modelBuilder.Entity<客戶聯絡人>()
+                        .Property(c => c.Id)
+                        .ValueGeneratedOnAdd();
+
+                    modelBuilder.Entity<客戶銀行資訊>()
+                        .Property(c => c.Id)
+                        .ValueGeneratedOnAdd();
                     break;
                 default:
                     throw new Exception("Unsupported database provider");
