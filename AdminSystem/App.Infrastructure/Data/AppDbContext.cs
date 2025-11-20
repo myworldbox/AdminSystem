@@ -107,10 +107,9 @@ namespace AdminSystem.Infrastructure.Data
                 case Enums.Database.SqlServer:
                 case Enums.Database.MySQL:
                 case Enums.Database.SQLite:
-                    // 讓這三個實體的 Id 可以手動指定（關鍵！）
                     modelBuilder.Entity<客戶資料>()
                         .Property(c => c.Id)
-                        .ValueGeneratedOnAdd();                    // 正常情況自動產生
+                        .ValueGeneratedOnAdd();
 
                     modelBuilder.Entity<客戶聯絡人>()
                         .Property(c => c.Id)
