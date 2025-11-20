@@ -124,10 +124,6 @@ namespace AdminSystem.App.Infrastructure.Data
                 new 客戶銀行資訊 { Id = 10, 客戶Id = 10, 銀行名稱 = "兆豐銀行",   銀行代碼 = 017, 分行代碼 = 010, 帳戶名稱 = "測試帳戶10",帳戶號碼 = "222233334444" }
             };
 
-            customers.ForEach(c => _context.Entry(c).State = EntityState.Added);
-            contacts.ForEach(c => _context.Entry(c).State = EntityState.Added);
-            banks.ForEach(b => _context.Entry(b).State = EntityState.Added);
-
             _context.客戶資料.AddRange(customers);
             _context.客戶聯絡人.AddRange(contacts);
             _context.客戶銀行資訊.AddRange(banks);
