@@ -22,6 +22,7 @@ namespace AdminSystem.Models.Tables_new
 
         internal static class Msg
         {
+            /* 19 */
             public const string Required = "{0} is a compulsory field";
             public const string NoChinese = "Chinese characters are not allowed in {0}.";
             public const string HkMobileInvalid = "HK mobile number should not start with '2' or '3'. Please input a valid mobile number.";
@@ -44,7 +45,10 @@ namespace AdminSystem.Models.Tables_new
         }
 
         // Properties
-        [Required(ErrorMessage = Msg.Required)][DisplayName("Staff No.")] public string STF_NO { get; set; } = null!;
+        [Required(ErrorMessage = Msg.Required)]
+        [DisplayName("Staff No.")]
+        [Unique(nameof(STF_NO))]
+        public string STF_NO { get; set; } = null!;
         [Required(ErrorMessage = Msg.Required)][DisplayName("Surname")] public string STF_SURNAME { get; set; } = null!;
         [Required(ErrorMessage = Msg.Required)][DisplayName("Staff Name in English")][NoChinese] public string STF_NAME { get; set; } = null!;
         [DisplayName("Given Name")][NoChinese] public string? STF_GIVENNAME { get; set; }
@@ -76,77 +80,121 @@ namespace AdminSystem.Models.Tables_new
         {
             var results = new List<ValidationResult>();
             var db = validationContext.GetService(typeof(DBnew)) as DBnew;
-            var userService = validationContext.GetService(typeof(ICurrentUserService)) as ICurrentUserService; // Assume you have this
+            var userService = validationContext.GetService(typeof(ICurrentUserService)) as ICurrentUserService;
 
-            // 1. Permanent contract lock
+            // === 1. Permanent Contract Lock (Blocks everything if true) ===
             if (!string.IsNullOrEmpty(STF_NO) && !CanModifyStaff(STF_NO, userService, db))
             {
                 results.Add(new ValidationResult(Msg.PermanentLocked));
-                return results; // Block everything else
+                return results; // Critical: return early like PL/SQL
             }
 
-            if (OperationMode != "display")
+            // === 2. Operation Mode Handling ===
+            bool isDisplay = OperationMode.Equals("display", StringComparison.OrdinalIgnoreCase);
+            bool isInsert = OperationMode.Equals("insert", StringComparison.OrdinalIgnoreCase);
+
+            if (!isDisplay)
             {
+                // Mobile + Country Code required (except display)
                 if (string.IsNullOrWhiteSpace(STF_PHONE1AREACODE) || string.IsNullOrWhiteSpace(STF_PHONE1))
+                {
                     results.Add(new ValidationResult(Msg.MobileRequired, new[] { nameof(STF_PHONE1AREACODE), nameof(STF_PHONE1) }));
+                }
+
+                // Warning: If full name has space in surname but no given name
+                if (!string.IsNullOrWhiteSpace(STF_SURNAME) && STF_SURNAME.Contains(' ') && string.IsNullOrWhiteSpace(STF_GIVENNAME))
+                {
+                    results.Add(new ValidationResult(
+                        "Warning: If the full name can be separated, please enter it as Surname and Given Name.<br/>" +
+                        "<span style=\"margin-left:20px;\">For example:</span><br/>" +
+                        "<span style=\"margin-left:20px;\">\"CHAN TAI MAN\" should be entered as:</span><br/>" +
+                        "<span style=\"margin-left:20px;\">Surname: CHAN</span><br/>" +
+                        "<span style=\"margin-left:20px;\">Given Name: TAI MAN</span>",
+                        new[] { nameof(STF_SURNAME), nameof(STF_GIVENNAME) }));
+                }
             }
 
+            // === 3. Combined Name Length (Surname + space + GivenName) ===
             if (CombinedName.Length > 75)
                 results.Add(new ValidationResult(Msg.NameTooLong));
 
-            // Identity rules
+            // === 4. Identity: HKID or Passport Required ===
             if (string.IsNullOrWhiteSpace(STF_HKID) && string.IsNullOrWhiteSpace(STF_PP_NO))
                 results.Add(new ValidationResult(Msg.IdOrPassportRequired, new[] { nameof(STF_HKID), nameof(STF_PP_NO) }));
 
+            // === 5. Both or Neither Rules ===
             BothOrNeither(STF_PP_NO, STF_PP_ISCNTY, "Passport No.", "Issue Country", results);
             BothOrNeither(STF_PERMITNO, STF_PERMIT_XDATE.HasValue ? "Y" : null, "Permit Number", "Permit Expiry Date", results);
 
-            if (STF_DOB.Date > DateTime.Today)
+            // === 6. Date of Birth Rules ===
+            if (STF_DOB > DateTime.Today)
                 results.Add(new ValidationResult(Msg.FutureDob, new[] { nameof(STF_DOB) }));
-            else if (DateTime.Today.Year - STF_DOB.Year - (DateTime.Today.DayOfYear < STF_DOB.DayOfYear ? 1 : 0) < 15)
-                results.Add(new ValidationResult(Msg.Under15, new[] { nameof(STF_DOB) }));
+            else
+            {
+                int age = DateTime.Today.Year - STF_DOB.Year;
+                if (DateTime.Today.DayOfYear < STF_DOB.DayOfYear) age--;
+                if (age < 15)
+                    results.Add(new ValidationResult(Msg.Under15, new[] { nameof(STF_DOB) })); // Warning in PL/SQL → keep as ValidationResult (UI can show as warning)
+            }
 
+            // === 7. Marital Status → Spouse Name ===
             if (STF_MARITAL_STAT == "M" && string.IsNullOrWhiteSpace(STF_SPS_NAME))
                 results.Add(new ValidationResult(Msg.SpouseRequired, new[] { nameof(STF_SPS_NAME) }));
 
+            // === Database-dependent validations (only if DB available) ===
             if (db != null && !string.IsNullOrEmpty(STF_NO))
             {
-                // Duplicates
+                var currentStaffNo = STF_NO.Trim();
+
+                // --- Duplicate HKID / Passport ---
                 CheckDuplicate(db, s => s.STF_HKID, STF_HKID, "HKID No.", results);
                 CheckDuplicate(db, s => s.STF_PP_NO, STF_PP_NO, "Passport No.", results);
 
-                // Cross ID conflict
-                if (!string.IsNullOrWhiteSpace(STF_HKID) && db.TBL_STAFF.Any(s => s.STF_PP_NO == STF_HKID.Trim() && s.STF_NO != STF_NO))
-                    results.Add(new ValidationResult(string.Format(Msg.IdConflict, "[HKID No.]", STF_HKID), new[] { nameof(STF_HKID) }));
-
-                if (!string.IsNullOrWhiteSpace(STF_PP_NO) && db.TBL_STAFF.Any(s => s.STF_HKID == STF_PP_NO.Trim() && s.STF_NO != STF_NO))
-                    results.Add(new ValidationResult(string.Format(Msg.IdConflict, "[Passport No.]", STF_PP_NO), new[] { nameof(STF_PP_NO) }));
-
-                // Payroll lock for name & bank
-                var original = db.TBL_STAFF.AsNoTracking().FirstOrDefault(s => s.STF_NO == STF_NO);
-                if (original != null && !AllowChangeBankAccount(STF_NO, userService, db))
+                // --- Cross ID conflict (HKID used as Passport or vice versa) ---
+                if (!string.IsNullOrWhiteSpace(STF_HKID))
                 {
-                    if (!string.Equals(original.STF_NAME?.Trim(), STF_NAME?.Trim(), StringComparison.OrdinalIgnoreCase))
+                    if (db.TBL_STAFF.Any(s => s.STF_PP_NO != null && s.STF_PP_NO.Trim() == STF_HKID.Trim() && s.STF_NO != currentStaffNo))
+                        results.Add(new ValidationResult(string.Format(Msg.IdConflict, "[HKID No.]", STF_HKID), new[] { nameof(STF_HKID) }));
+                }
+                if (!string.IsNullOrWhiteSpace(STF_PP_NO))
+                {
+                    if (db.TBL_STAFF.Any(s => s.STF_HKID != null && s.STF_HKID.Trim() == STF_PP_NO.Trim() && s.STF_NO != currentStaffNo))
+                        results.Add(new ValidationResult(string.Format(Msg.IdConflict, "[Passport No.]", STF_PP_NO), new[] { nameof(STF_PP_NO) }));
+                }
+
+                // --- Payroll Lock: Name & Bank Account ---
+                var original = db.TBL_STAFF.AsNoTracking().FirstOrDefault(s => s.STF_NO == currentStaffNo);
+                if (original != null && !AllowChangeBankAccount(currentStaffNo, userService, db))
+                {
+                    if (!string.Equals(original.STF_NAME?.Trim(), STF_NAME?.Trim(), StringComparison.OrdinalIgnoreCase) ||
+                        !string.Equals(original.STF_SURNAME?.Trim(), STF_SURNAME?.Trim(), StringComparison.OrdinalIgnoreCase) ||
+                        !string.Equals(original.STF_GIVENNAME?.Trim(), STF_GIVENNAME?.Trim(), StringComparison.OrdinalIgnoreCase))
+                    {
                         results.Add(new ValidationResult(Msg.PayrollLockedName));
+                    }
 
                     if (!string.Equals(original.STF_AC_BNK_CODE?.Trim(), STF_AC_BNK_CODE?.Trim()) ||
                         !string.Equals(original.STF_AC_CODE?.Trim(), STF_AC_CODE?.Trim()))
+                    {
                         results.Add(new ValidationResult(Msg.PayrollLockedBank));
+                    }
                 }
 
-                // Cross-center warning
+                // --- Cross-center contract warning ---
                 var userDept = userService?.GetCurrentUserDepartment();
                 if (!string.IsNullOrEmpty(userDept) &&
-                    db.TBL_PTCNTR.Any(c => c.PCT_STFNO == STF_NO && c.PCT_DEL_FLG == "N" && c.PCT_CNTR_CTR != userDept))
+                    db.TBL_PTCNTR.Any(c => c.PCT_STFNO == currentStaffNo && c.PCT_DEL_FLG == "N" && c.PCT_CNTR_CTR != userDept))
                 {
                     results.Add(new ValidationResult(Msg.OtherCenterWarning));
                 }
             }
 
-            // Invalid bank code
+            // === 8. Invalid Bank Code ===
             if (db != null && !string.IsNullOrWhiteSpace(STF_AC_BNK_CODE) &&
-                !db.TBL_BANK.Any(b => b.BNK_CODE == STF_AC_BNK_CODE))
+                !db.TBL_BANK.Any(b => b.BNK_CODE == STF_AC_BNK_CODE.Trim()))
+            {
                 results.Add(new ValidationResult(string.Format(Msg.InvalidBank, STF_AC_BNK_CODE), new[] { nameof(STF_AC_BNK_CODE) }));
+            }
 
             return results;
         }
@@ -168,12 +216,21 @@ namespace AdminSystem.Models.Tables_new
 
         // === Translated Oracle Functions ===
 
+        private bool HasPermanentContract(string staffNo, DBnew? db)
+        {
+            // Equivalent to: UNION of active contracts from both tables
+            bool hasActiveCntr = db.TBL_CNTR.Any(c => c.CNT_STFNO == staffNo && c.CNT_CESS_DATE == null);
+            bool hasActiveCntrTx = db.TBL_CNTR_TX.Any(c => c.CTT_STFNO == staffNo && c.CTT_CESS_DATE == null);
+
+            return hasActiveCntr || hasActiveCntrTx;
+        }
+        
         private bool CanModifyStaff(string staffNo, ICurrentUserService? userService, DBnew? db)
         {
             if (userService == null) return true;
             if (userService.IsHrbUser()) return true;
             if (userService.IsSsUser()) return true;
-            return !db?.HR_PTCNTR.Any(c => c.PCT_STFNO == staffNo && c.PCT_TYPE == "PERM" && c.PCT_DEL_FLG == "N") ?? true;
+            return !db?.TBL_PTCNTR.Any(c => c.PCT_STFNO == staffNo && c.PCT_DEL_FLG == "N") ?? false && HasPermanentContract(staffNo, db);
         }
 
         private bool AllowChangeBankAccount(string staffNo, ICurrentUserService? userService, DBnew? db)
@@ -219,6 +276,45 @@ namespace AdminSystem.Models.Tables_new
 
             return expected == checkChar;
         }
+    }
+
+    public class UniqueAttribute : ValidationAttribute
+    {
+        private readonly string _propertyName;
+
+        public UniqueAttribute(string propertyName)
+        {
+            _propertyName = propertyName;
+        }
+
+        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        {
+            if (value == null) return ValidationResult.Success;
+
+            var dbContext = (DBnew)validationContext.GetService(typeof(DBnew));
+            var entityType = validationContext.ObjectType;
+            var property = entityType.GetProperty(_propertyName);
+
+            if (property == null)
+                return new ValidationResult($"Property '{_propertyName}' not found.");
+
+            var setMethod = typeof(DbContext)
+                .GetMethods()
+                .First(m => m.Name == nameof(DbContext.Set)
+                         && m.IsGenericMethodDefinition
+                         && m.GetParameters().Length == 0);
+
+            var generic = setMethod.MakeGenericMethod(entityType);
+            var queryable = (IQueryable<object>)generic.Invoke(dbContext, null);
+
+            var exists = queryable.Any(e => property.GetValue(e) != null && property.GetValue(e).Equals(value));
+
+            if (exists)
+                return new ValidationResult($"{_propertyName} must be unique.");
+
+            return ValidationResult.Success;
+        }
+
     }
 
     // Custom Attributes

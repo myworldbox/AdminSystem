@@ -100,4 +100,6 @@ public partial class TBL_STAFF
     public virtual TBL_BANK? STF_AC_BNK_CODENavigation { get; set; }
 
     public virtual ICollection<TBL_CHILD> TBL_CHILD { get; set; } = new List<TBL_CHILD>();
+
+    public virtual ICollection<TBL_CNTR> TBL_CNTR { get; set; } = new List<TBL_CNTR>();
 }
