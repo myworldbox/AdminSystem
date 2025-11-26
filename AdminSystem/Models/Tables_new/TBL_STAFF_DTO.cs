@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿// TBL_STAFF_DTO.cs (Fully DataAnnotation-based)
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace AdminSystem.Models.Tables_new
@@ -10,7 +11,7 @@ namespace AdminSystem.Models.Tables_new
         // ──────────────────────────────────────────────────────────────────────
         [Required(ErrorMessage = Msg.Required)]
         [DisplayName("Staff No.")]
-        [Unique(nameof(STF_NO))]
+        [UniqueStaffNo]
         public string STF_NO { get; set; } = null!;
 
         [Required(ErrorMessage = Msg.Required)]
@@ -44,6 +45,7 @@ namespace AdminSystem.Models.Tables_new
 
         [Required(ErrorMessage = Msg.Required)]
         [DisplayName("Marital Status")]
+        [SpouseRequiredWhenMarried]
         public string STF_MARITAL_STAT { get; set; } = null!;
 
         // ──────────────────────────────────────────────────────────────────────
@@ -67,9 +69,11 @@ namespace AdminSystem.Models.Tables_new
         // ──────────────────────────────────────────────────────────────────────
         [DisplayName("HKID No.")]
         [HkIdFullValidation]
+        [UniqueHkIdOrPassport(nameof(STF_PP_NO))]
         public string? STF_HKID { get; set; }
 
         [DisplayName("Passport No.")]
+        [UniqueHkIdOrPassport(nameof(STF_HKID))]
         public string? STF_PP_NO { get; set; }
 
         [DisplayName("Passport Issue Country")]
@@ -87,11 +91,13 @@ namespace AdminSystem.Models.Tables_new
         [Required(ErrorMessage = Msg.Required)]
         [DisplayName("Bank Code")]
         [BankCodeExists]
+        [BankAccountEditableAfterPayroll(nameof(STF_AC_CODE))]
         public string? STF_AC_BNK_CODE { get; set; }
 
         [Required(ErrorMessage = Msg.Required)]
         [DisplayName("Account Code")]
         [AccountCodeLength]
+        [BankAccountEditableAfterPayroll(nameof(STF_AC_BNK_CODE))]
         public string? STF_AC_CODE { get; set; }
 
         // ──────────────────────────────────────────────────────────────────────
@@ -99,11 +105,13 @@ namespace AdminSystem.Models.Tables_new
         // ──────────────────────────────────────────────────────────────────────
         [Required(ErrorMessage = Msg.Required)]
         [DisplayName("Mobile Country Code")]
+        [MobileRequiredWith(nameof(STF_PHONE1))]
         public string? STF_PHONE1AREACODE { get; set; }
 
         [Required(ErrorMessage = Msg.Required)]
         [DisplayName("Mobile Number")]
         [HkMobileValid]
+        [MobileRequiredWith(nameof(STF_PHONE1AREACODE))]
         public string? STF_PHONE1 { get; set; }
 
         [DisplayName("Phone 2")]
@@ -118,7 +126,6 @@ namespace AdminSystem.Models.Tables_new
         // ──────────────────────────────────────────────────────────────────────
         [DisplayName("Spouse Name")]
         [NoChinese]
-        [RequiredWhenMaritalStatusIsM(ErrorMessage = Msg.SpouseRequired)]
         public string? STF_SPS_NAME { get; set; }
 
         public string? STF_SPS_HKID { get; set; }
@@ -147,11 +154,11 @@ namespace AdminSystem.Models.Tables_new
         public DateTime? STF_EMPVISA_XDATE { get; set; }
 
         [DisplayName("Permit Number")]
-        [RequiredIfOtherHasValue(nameof(STF_PERMIT_XDATE), ErrorMessage = "Permit Number and Expiry Date must be both filled or both empty.")]
+        [PermitPairRequired(nameof(STF_PERMIT_XDATE))]
         public string? STF_PERMITNO { get; set; }
 
         [DisplayName("Permit Expiry Date")]
-        [RequiredIfOtherHasValue(nameof(STF_PERMITNO), ErrorMessage = "Permit Number and Expiry Date must be both filled or both empty.")]
+        [PermitPairRequired(nameof(STF_PERMITNO))]
         public DateTime? STF_PERMIT_XDATE { get; set; }
 
         // ──────────────────────────────────────────────────────────────────────
@@ -159,14 +166,11 @@ namespace AdminSystem.Models.Tables_new
         // ──────────────────────────────────────────────────────────────────────
         [Required(ErrorMessage = Msg.Required)]
         public string STF_ACTN { get; set; } = null!;
-
         public DateTime STF_ACTNDATE { get; set; }
 
         [Required(ErrorMessage = Msg.Required)]
         public string STF_ACTNUSER { get; set; } = null!;
-
         public string? STF_ACTNUSER_SSO { get; set; }
-
         public DateTime TIMESTAMP { get; set; }
 
         // ──────────────────────────────────────────────────────────────────────
@@ -174,6 +178,16 @@ namespace AdminSystem.Models.Tables_new
         // ──────────────────────────────────────────────────────────────────────
         public string OperationMode { get; set; } = "insert";
 
+        [FullNameMaxLength(75)]
         public string CombinedName => $"{STF_SURNAME} {STF_GIVENNAME}".Trim();
+
+        [NameChangeAllowedAfterPayroll(nameof(STF_NAME), nameof(STF_GIVENNAME))]
+        public string NameChangePlaceholder => STF_SURNAME + STF_NAME + STF_GIVENNAME; // dummy trigger
+
+        [PermanentContractLock]
+        public string PermanentLockTrigger => STF_NO; // dummy property to trigger validation
+
+        [CrossCenterContractWarning]
+        public string CrossCenterTrigger => STF_NO;
     }
 }

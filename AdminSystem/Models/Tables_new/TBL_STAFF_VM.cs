@@ -11,7 +11,7 @@ using static AdminSystem.Models.Tables_new.TBL_STAFF_DTO;
 namespace AdminSystem.Models.Tables_new
 {
     internal abstract class TBL_STAFF_VM : TBL_STAFF_DTO { }
-    partial class TBL_STAFF_DTO : IValidatableObject
+    partial class TBL_STAFF_DTO
     {
         // ──────────────────────────────────────────────────────────────────────
         // Centralized regex & constants — DO NOT TOUCH (as requested)
@@ -46,132 +46,19 @@ namespace AdminSystem.Models.Tables_new
             public const string OtherCenterWarning = "Warning: This staff has contract(s) in other centres. Data changes of this staff will also affect them.";
         }
 
-        // ──────────────────────────────────────────────────────────────────────
-        // IValidatableObject — ONLY complex / DB / cross-field logic remains
-        // ──────────────────────────────────────────────────────────────────────
-        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        {
-            var results = new List<ValidationResult>();
-            var db = validationContext.GetService(typeof(DBnew)) as DBnew;
-            var userService = validationContext.GetService(typeof(ICurrentUserService)) as ICurrentUserService;
-
-            var mode = (OperationMode ?? "").Trim().ToLowerInvariant();
-            bool isDisplay = mode == "display";
-            string currentStaffNo = STF_NO?.Trim() ?? "";
-
-            // 1. Permanent Contract Lock
-            if (!string.IsNullOrEmpty(currentStaffNo) && !CanModifyStaff(currentStaffNo, userService, db))
-            {
-                results.Add(new ValidationResult(Msg.PermanentLocked));
-                return results;
-            }
-
-            // 2. Mobile required only in insert/update
-            if (!isDisplay)
-            {
-                if (string.IsNullOrWhiteSpace(STF_PHONE1AREACODE) || string.IsNullOrWhiteSpace(STF_PHONE1))
-                    results.Add(new ValidationResult(Msg.MobileRequired, [nameof(STF_PHONE1AREACODE), nameof(STF_PHONE1)]));
-            }
-
-            // 3. At least one identity document
-            if (string.IsNullOrWhiteSpace(STF_HKID) && string.IsNullOrWhiteSpace(STF_PP_NO))
-                results.Add(new ValidationResult(Msg.IdOrPassportRequired, [nameof(STF_HKID), nameof(STF_PP_NO)]));
-
-            // 4. Full English name ≤ 75 chars
-            var fullName = $"{STF_SURNAME?.Trim()} {STF_GIVENNAME?.Trim()}".Trim();
-            if (fullName.Length > 75)
-                results.Add(new ValidationResult(Msg.NameTooLong));
-
-            // 5. Surname has space but no Given Name → warning
-            if (!isDisplay && !string.IsNullOrWhiteSpace(STF_SURNAME) &&
-                STF_SURNAME.Trim().Contains(' ') && string.IsNullOrWhiteSpace(STF_GIVENNAME))
-            {
-                results.Add(new ValidationResult(
-                    "Warning: If the full name can be separated, please enter it as Surname and Given Name.<br/>" +
-                    "<span style=\"margin-left:20px;\">For example:</span><br/>" +
-                    "<span style=\"margin-left:20px;\">\"CHAN TAI MAN\" should be entered as:</span><br/>" +
-                    "<span style=\"margin-left:20px;\">Surname: CHAN</span><br/>" +
-                    "<span style=\"margin-left:20px;\">Given Name: TAI MAN</span>",
-                    [nameof(STF_SURNAME), nameof(STF_GIVENNAME)]));
-            }
-
-            // 6. DB-dependent checks
-            if (db != null && !string.IsNullOrEmpty(currentStaffNo))
-            {
-                ValidateUniquenessAndConflicts(db, currentStaffNo, results);
-                ValidatePayrollLock(db, userService, currentStaffNo, results);
-                ValidateCrossCenterWarning(db, userService, currentStaffNo, results);
-            }
-
-            return results;
-        }
-
-        // ──────────────────────────────────────────────────────────────────────
-        // DB-only validation methods (unchanged)
-        // ──────────────────────────────────────────────────────────────────────
-        private void ValidateUniquenessAndConflicts(DBnew db, string currentStaffNo, List<ValidationResult> results)
-        {
-            CheckDuplicateId(db, s => s.STF_HKID, STF_HKID, "HKID No.", nameof(STF_HKID), currentStaffNo, results);
-            CheckDuplicateId(db, s => s.STF_PP_NO, STF_PP_NO, "Passport No.", nameof(STF_PP_NO), currentStaffNo, results);
-
-            if (!string.IsNullOrWhiteSpace(STF_HKID) &&
-                db.TBL_STAFF.Any(s => s.STF_PP_NO != null && s.STF_PP_NO.Trim() == STF_HKID.Trim() && s.STF_NO != currentStaffNo))
-                results.Add(new ValidationResult(string.Format(Msg.IdConflict, "[HKID No.]", STF_HKID), [nameof(STF_HKID)]));
-
-            if (!string.IsNullOrWhiteSpace(STF_PP_NO) &&
-                db.TBL_STAFF.Any(s => s.STF_HKID != null && s.STF_HKID.Trim() == STF_PP_NO.Trim() && s.STF_NO != currentStaffNo))
-                results.Add(new ValidationResult(string.Format(Msg.IdConflict, "[Passport No.]", STF_PP_NO), [nameof(STF_PP_NO)]));
-        }
-
-        private void CheckDuplicateId(DBnew db, Func<TBL_STAFF, string?> selector, string? value, string fieldName, string memberName, string currentStaffNo, List<ValidationResult> results)
-        {
-            if (!string.IsNullOrWhiteSpace(value) &&
-                db.TBL_STAFF.Any(s => selector(s) != null && selector(s).Trim() == value.Trim() && s.STF_NO != currentStaffNo))
-            {
-                results.Add(new ValidationResult(string.Format(Msg.Duplicate, fieldName, value.Trim()), [memberName]));
-            }
-        }
-
-        private void ValidatePayrollLock(DBnew db, ICurrentUserService? userService, string currentStaffNo, List<ValidationResult> results)
-        {
-            if (AllowChangeBankAccount(currentStaffNo, userService, db)) return;
-
-            var original = db.TBL_STAFF.AsNoTracking().FirstOrDefault(s => s.STF_NO == currentStaffNo);
-            if (original == null) return;
-
-            bool nameChanged = !string.Equals(original.STF_SURNAME?.Trim(), STF_SURNAME?.Trim(), StringComparison.OrdinalIgnoreCase) ||
-                               !string.Equals(original.STF_NAME?.Trim(), STF_NAME?.Trim(), StringComparison.OrdinalIgnoreCase) ||
-                               !string.Equals(original.STF_GIVENNAME?.Trim(), STF_GIVENNAME?.Trim(), StringComparison.OrdinalIgnoreCase);
-
-            bool bankChanged = !string.Equals(original.STF_AC_BNK_CODE?.Trim(), STF_AC_BNK_CODE?.Trim(), StringComparison.OrdinalIgnoreCase) ||
-                               !string.Equals(original.STF_AC_CODE?.Trim(), STF_AC_CODE?.Trim(), StringComparison.OrdinalIgnoreCase);
-
-            if (nameChanged) results.Add(new ValidationResult(Msg.PayrollLockedName));
-            if (bankChanged) results.Add(new ValidationResult(Msg.PayrollLockedBank));
-        }
-
-        private void ValidateCrossCenterWarning(DBnew db, ICurrentUserService? userService, string currentStaffNo, List<ValidationResult> results)
-        {
-            var userDept = userService?.GetCurrentUserDepartment();
-            if (string.IsNullOrEmpty(userDept)) return;
-
-            if (db.TBL_PTCNTR.Any(c => c.PCT_STFNO == currentStaffNo && c.PCT_DEL_FLG == "N" && c.PCT_CNTR_CTR != userDept))
-                results.Add(new ValidationResult(Msg.OtherCenterWarning));
-        }
-
         // Oracle logic translations
         private bool HasPermanentContract(string staffNo, DBnew? db) => db != null && (
             db.TBL_CNTR.Any(c => c.CNT_STFNO == staffNo && c.CNT_CESS_DATE == null) ||
             db.TBL_CNTR_TX.Any(c => c.CTT_STFNO == staffNo && c.CTT_CESS_DATE == null));
 
-        private bool CanModifyStaff(string staffNo, ICurrentUserService? userService, DBnew? db)
+        public bool CanModifyStaff(string staffNo, ICurrentUserService? userService, DBnew? db)
         {
             if (userService == null || userService.IsHrbUser() || userService.IsSsUser()) return true;
             bool hasPartTime = db?.TBL_PTCNTR.Any(c => c.PCT_STFNO == staffNo && c.PCT_DEL_FLG == "N") ?? false;
             return !(hasPartTime && HasPermanentContract(staffNo, db));
         }
 
-        private bool AllowChangeBankAccount(string staffNo, ICurrentUserService? userService, DBnew? db)
+        public bool AllowChangeBankAccount(string staffNo, ICurrentUserService? userService, DBnew? db)
         {
             if (userService?.IsFsdOperator() == true) return true;
             var ctrl = db?.TBL_PYRLPROC_CTRL.FirstOrDefault();
@@ -353,6 +240,230 @@ namespace AdminSystem.Models.Tables_new
         {
             if (value is string s && s != null && s.Replace("-", "").Length > 12)
                 return new ValidationResult(Msg.AccountCodeTooLong);
+            return ValidationResult.Success;
+        }
+    }
+
+    public class UniqueStaffNoAttribute : ValidationAttribute
+    {
+        protected override ValidationResult? IsValid(object? value, ValidationContext ctx)
+        {
+            if (value is not string staffNo || string.IsNullOrWhiteSpace(staffNo)) return ValidationResult.Success;
+            var db = ctx.GetService(typeof(DBnew)) as DBnew;
+            if (db?.TBL_STAFF.Any(s => s.STF_NO == staffNo.Trim()) == true)
+                return new ValidationResult($"Staff No. ({staffNo}) already exists.");
+            return ValidationResult.Success;
+        }
+    }
+
+    public class UniqueHkIdOrPassportAttribute : ValidationAttribute
+    {
+        private readonly string _otherIdProperty;
+        public UniqueHkIdOrPassportAttribute(string otherIdProperty) => _otherIdProperty = otherIdProperty;
+
+        protected override ValidationResult? IsValid(object? value, ValidationContext ctx)
+        {
+            var db = ctx.GetService(typeof(DBnew)) as DBnew;
+            if (db == null || string.IsNullOrWhiteSpace(value?.ToString())) return ValidationResult.Success;
+
+            var instance = ctx.ObjectInstance as TBL_STAFF_DTO;
+            var currentStaffNo = instance?.STF_NO?.Trim();
+            var thisValue = value.ToString()!.Trim();
+
+            var property = ctx.ObjectType.GetProperty(_otherIdProperty);
+            var otherValue = property?.GetValue(instance)?.ToString()?.Trim();
+
+            // Conflict: same as someone's HKID or Passport
+            bool conflict = db.TBL_STAFF.Any(s =>
+                s.STF_NO != currentStaffNo &&
+                ((s.STF_HKID != null && s.STF_HKID.Trim() == thisValue) ||
+                 (s.STF_PP_NO != null && s.STF_PP_NO.Trim() == thisValue)));
+
+            if (conflict)
+                return new ValidationResult(string.Format(Msg.IdConflict,
+                    ctx.DisplayName == "HKID No." ? "[HKID No.]" : "[Passport No.]", thisValue));
+
+            return ValidationResult.Success;
+        }
+    }
+
+    public class MobileRequiredWithAttribute : ValidationAttribute
+    {
+        private readonly string _otherProperty;
+        public MobileRequiredWithAttribute(string otherProperty) => _otherProperty = otherProperty;
+
+        protected override ValidationResult? IsValid(object? value, ValidationContext ctx)
+        {
+            if (ctx.ObjectInstance is not TBL_STAFF_DTO instance) return ValidationResult.Success;
+            if (instance.OperationMode.Equals("display", StringComparison.OrdinalIgnoreCase))
+                return ValidationResult.Success;
+
+            var otherProp = ctx.ObjectType.GetProperty(_otherProperty);
+            var otherValue = otherProp?.GetValue(instance);
+
+            bool thisHasValue = !string.IsNullOrWhiteSpace(value?.ToString());
+            bool otherHasValue = !string.IsNullOrWhiteSpace(otherValue?.ToString());
+
+            if ((thisHasValue && !otherHasValue) || (!thisHasValue && otherHasValue) || (!thisHasValue && !otherHasValue))
+                return new ValidationResult(Msg.MobileRequired,
+                    new[] { ctx.MemberName!, _otherProperty });
+
+            return ValidationResult.Success;
+        }
+    }
+
+    public class SpouseRequiredWhenMarriedAttribute : ValidationAttribute
+    {
+        protected override ValidationResult? IsValid(object? value, ValidationContext ctx)
+        {
+            if (ctx.ObjectInstance is not TBL_STAFF_DTO instance) return ValidationResult.Success;
+            if (instance.STF_MARITAL_STAT == "M" && string.IsNullOrWhiteSpace(instance.STF_SPS_NAME))
+                return new ValidationResult(Msg.SpouseRequired);
+            return ValidationResult.Success;
+        }
+    }
+
+    public class FullNameMaxLengthAttribute : ValidationAttribute
+    {
+        private readonly int _max;
+        public FullNameMaxLengthAttribute(int max) => _max = max;
+
+        protected override ValidationResult? IsValid(object? value, ValidationContext ctx)
+        {
+            if (ctx.ObjectInstance is not TBL_STAFF_DTO instance) return ValidationResult.Success;
+            var full = $"{instance.STF_SURNAME?.Trim()} {instance.STF_GIVENNAME?.Trim()}".Trim();
+            if (full.Length > _max)
+                return new ValidationResult(Msg.NameTooLong);
+            return ValidationResult.Success;
+        }
+    }
+
+    public class PermitPairRequiredAttribute : ValidationAttribute
+    {
+        private readonly string _pairProperty;
+        public PermitPairRequiredAttribute(string pairProperty) => _pairProperty = pairProperty;
+
+        protected override ValidationResult? IsValid(object? value, ValidationContext ctx)
+        {
+            var instance = ctx.ObjectInstance as TBL_STAFF_DTO;
+            var pairProp = ctx.ObjectType.GetProperty(_pairProperty);
+            var pairValue = pairProp?.GetValue(instance);
+
+            bool thisHasValue = value switch
+            {
+                string s => !string.IsNullOrWhiteSpace(s),
+                DateTime d => d != default,
+                _ => value != null
+            };
+
+            bool pairHasValue = pairValue switch
+            {
+                string s => !string.IsNullOrWhiteSpace(s),
+                DateTime d => d != default,
+                _ => pairValue != null
+            };
+
+            if (thisHasValue != pairHasValue)
+                return new ValidationResult(string.Format(Msg.BothOrNone, ctx.DisplayName, pairProp?.Name?.Replace("STF_", "").Replace("_", " ")));
+
+            return ValidationResult.Success;
+        }
+    }
+
+    public class PermanentContractLockAttribute : ValidationAttribute
+    {
+        protected override ValidationResult? IsValid(object? value, ValidationContext ctx)
+        {
+            var instance = ctx.ObjectInstance as TBL_STAFF_DTO;
+            var userService = ctx.GetService(typeof(ICurrentUserService)) as ICurrentUserService;
+            var db = ctx.GetService(typeof(DBnew)) as DBnew;
+            if (instance == null || string.IsNullOrWhiteSpace(instance.STF_NO)) return ValidationResult.Success;
+
+            if (!instance.CanModifyStaff(instance.STF_NO, userService, db))
+                return new ValidationResult(Msg.PermanentLocked);
+
+            return ValidationResult.Success;
+        }
+    }
+
+    public class CrossCenterContractWarningAttribute : ValidationAttribute
+    {
+        protected override ValidationResult? IsValid(object? value, ValidationContext ctx)
+        {
+            var instance = ctx.ObjectInstance as TBL_STAFF_DTO;
+            var userService = ctx.GetService(typeof(ICurrentUserService)) as ICurrentUserService;
+            var db = ctx.GetService(typeof(DBnew)) as DBnew;
+            if (instance == null || string.IsNullOrWhiteSpace(instance.STF_NO)) return ValidationResult.Success;
+
+            var userDept = userService?.GetCurrentUserDepartment();
+            if (string.IsNullOrEmpty(userDept)) return ValidationResult.Success;
+
+            if (db?.TBL_PTCNTR.Any(c => c.PCT_STFNO == instance.STF_NO && c.PCT_DEL_FLG == "N" && c.PCT_CNTR_CTR != userDept) == true)
+                return new ValidationResult(Msg.OtherCenterWarning); // Warning, not error
+
+            return ValidationResult.Success;
+        }
+    }
+
+    public class NameChangeAllowedAfterPayrollAttribute : ValidationAttribute
+    {
+        private readonly string[] _nameFields;
+        public NameChangeAllowedAfterPayrollAttribute(params string[] nameFields) => _nameFields = nameFields;
+
+        protected override ValidationResult? IsValid(object? value, ValidationContext ctx)
+        {
+            var instance = ctx.ObjectInstance as TBL_STAFF_DTO;
+            var db = ctx.GetService(typeof(DBnew)) as DBnew;
+            var userService = ctx.GetService(typeof(ICurrentUserService)) as ICurrentUserService;
+            if (instance == null || string.IsNullOrWhiteSpace(instance.STF_NO)) return ValidationResult.Success;
+
+            if (instance.AllowChangeBankAccount(instance.STF_NO, userService, db)) return ValidationResult.Success;
+
+            var original = db?.TBL_STAFF.AsNoTracking().FirstOrDefault(s => s.STF_NO == instance.STF_NO);
+            if (original == null) return ValidationResult.Success;
+
+            foreach (var field in _nameFields)
+            {
+                var prop = typeof(TBL_STAFF_DTO).GetProperty(field);
+                var oldVal = prop?.GetValue(original)?.ToString()?.Trim();
+                var newVal = prop?.GetValue(instance)?.ToString()?.Trim();
+                if (!string.Equals(oldVal, newVal, StringComparison.OrdinalIgnoreCase))
+                    return new ValidationResult(Msg.PayrollLockedName);
+            }
+
+            return ValidationResult.Success;
+        }
+    }
+
+    public class BankAccountEditableAfterPayrollAttribute : ValidationAttribute
+    {
+        private readonly string _pairProperty;
+        public BankAccountEditableAfterPayrollAttribute(string pairProperty) => _pairProperty = pairProperty;
+
+        protected override ValidationResult? IsValid(object? value, ValidationContext ctx)
+        {
+            var instance = ctx.ObjectInstance as TBL_STAFF_DTO;
+            var db = ctx.GetService(typeof(DBnew)) as DBnew;
+            var userService = ctx.GetService(typeof(ICurrentUserService)) as ICurrentUserService;
+            if (instance == null || string.IsNullOrWhiteSpace(instance.STF_NO)) return ValidationResult.Success;
+
+            if (instance.AllowChangeBankAccount(instance.STF_NO, userService, db)) return ValidationResult.Success;
+
+            var original = db?.TBL_STAFF.AsNoTracking().FirstOrDefault(s => s.STF_NO == instance.STF_NO);
+            if (original == null) return ValidationResult.Success;
+
+            var thisChanged = !string.Equals(
+                original.GetType().GetProperty(ctx.MemberName!)?.GetValue(original)?.ToString()?.Trim(),
+                value?.ToString()?.Trim(), StringComparison.OrdinalIgnoreCase);
+
+            var pairProp = ctx.ObjectType.GetProperty(_pairProperty);
+            var pairChanged = !string.Equals(
+                pairProp?.GetValue(original)?.ToString()?.Trim(),
+                pairProp?.GetValue(instance)?.ToString()?.Trim(), StringComparison.OrdinalIgnoreCase);
+
+            if (thisChanged || pairChanged)
+                return new ValidationResult(Msg.PayrollLockedBank);
+
             return ValidationResult.Success;
         }
     }
