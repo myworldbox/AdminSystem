@@ -8,16 +8,12 @@ public class MappingHelper : Profile
 {
     public MappingHelper()
     {
-        CreateMap<客戶資料, InfoViewModel>();
-        CreateMap<InfoViewModel, 客戶資料>();
+        CreateMap<客戶資料, InfoViewModel>().ReverseMap();
 
-        CreateMap<客戶聯絡人, ContactViewModel>();
-        CreateMap<ContactViewModel, 客戶聯絡人>();
+        CreateMap<客戶聯絡人, ContactViewModel>().ReverseMap();
 
-        CreateMap<客戶銀行資訊, BankViewModel>();
-        CreateMap<BankViewModel, 客戶銀行資訊>();
+        CreateMap<客戶銀行資訊, BankViewModel>().ReverseMap();
 
-        CreateMap<VwCustomerSummary, SummaryViewModel>();
-        CreateMap<SummaryViewModel, VwCustomerSummary>();
+        CreateMap<VwCustomerSummary, SummaryViewModel>().ReverseMap();
     }
 }
