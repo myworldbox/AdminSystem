@@ -10,19 +10,20 @@ using static AdminSystem.Models.Tables_new.TBL_STAFF_DTO;
 
 namespace AdminSystem.Models.Tables_new
 {
-    public partial class TBL_STAFF_DTO : IValidatableObject
+    internal abstract class TBL_STAFF_VM : TBL_STAFF_DTO { }
+    partial class TBL_STAFF_DTO : IValidatableObject
     {
         // ──────────────────────────────────────────────────────────────────────
         // Centralized regex & constants — DO NOT TOUCH (as requested)
         // ──────────────────────────────────────────────────────────────────────
-        internal static class Patterns
+        internal abstract class Patterns
         {
             public static readonly Regex ChineseChars = new(@"[\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF]", RegexOptions.Compiled);
             public static readonly Regex HkIdBasic = new(@"^[A-Z]{1,2}\d{6}\([0-9A]\)$|^[A-Z]{1,2}\d{6}[0-9A]$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             public static readonly Regex NonDigits = new(@"\D", RegexOptions.Compiled);
         }
 
-        internal static class Msg
+        internal abstract class Msg
         {
             public const string Required = "{0} is a compulsory field";
             public const string NoChinese = "Chinese characters are not allowed in {0}.";
@@ -69,12 +70,12 @@ namespace AdminSystem.Models.Tables_new
             if (!isDisplay)
             {
                 if (string.IsNullOrWhiteSpace(STF_PHONE1AREACODE) || string.IsNullOrWhiteSpace(STF_PHONE1))
-                    results.Add(new ValidationResult(Msg.MobileRequired, new[] { nameof(STF_PHONE1AREACODE), nameof(STF_PHONE1) }));
+                    results.Add(new ValidationResult(Msg.MobileRequired, [nameof(STF_PHONE1AREACODE), nameof(STF_PHONE1)]));
             }
 
             // 3. At least one identity document
             if (string.IsNullOrWhiteSpace(STF_HKID) && string.IsNullOrWhiteSpace(STF_PP_NO))
-                results.Add(new ValidationResult(Msg.IdOrPassportRequired, new[] { nameof(STF_HKID), nameof(STF_PP_NO) }));
+                results.Add(new ValidationResult(Msg.IdOrPassportRequired, [nameof(STF_HKID), nameof(STF_PP_NO)]));
 
             // 4. Full English name ≤ 75 chars
             var fullName = $"{STF_SURNAME?.Trim()} {STF_GIVENNAME?.Trim()}".Trim();
@@ -91,7 +92,7 @@ namespace AdminSystem.Models.Tables_new
                     "<span style=\"margin-left:20px;\">\"CHAN TAI MAN\" should be entered as:</span><br/>" +
                     "<span style=\"margin-left:20px;\">Surname: CHAN</span><br/>" +
                     "<span style=\"margin-left:20px;\">Given Name: TAI MAN</span>",
-                    new[] { nameof(STF_SURNAME), nameof(STF_GIVENNAME) }));
+                    [nameof(STF_SURNAME), nameof(STF_GIVENNAME)]));
             }
 
             // 6. DB-dependent checks
@@ -115,11 +116,11 @@ namespace AdminSystem.Models.Tables_new
 
             if (!string.IsNullOrWhiteSpace(STF_HKID) &&
                 db.TBL_STAFF.Any(s => s.STF_PP_NO != null && s.STF_PP_NO.Trim() == STF_HKID.Trim() && s.STF_NO != currentStaffNo))
-                results.Add(new ValidationResult(string.Format(Msg.IdConflict, "[HKID No.]", STF_HKID), new[] { nameof(STF_HKID) }));
+                results.Add(new ValidationResult(string.Format(Msg.IdConflict, "[HKID No.]", STF_HKID), [nameof(STF_HKID)]));
 
             if (!string.IsNullOrWhiteSpace(STF_PP_NO) &&
                 db.TBL_STAFF.Any(s => s.STF_HKID != null && s.STF_HKID.Trim() == STF_PP_NO.Trim() && s.STF_NO != currentStaffNo))
-                results.Add(new ValidationResult(string.Format(Msg.IdConflict, "[Passport No.]", STF_PP_NO), new[] { nameof(STF_PP_NO) }));
+                results.Add(new ValidationResult(string.Format(Msg.IdConflict, "[Passport No.]", STF_PP_NO), [nameof(STF_PP_NO)]));
         }
 
         private void CheckDuplicateId(DBnew db, Func<TBL_STAFF, string?> selector, string? value, string fieldName, string memberName, string currentStaffNo, List<ValidationResult> results)
@@ -127,7 +128,7 @@ namespace AdminSystem.Models.Tables_new
             if (!string.IsNullOrWhiteSpace(value) &&
                 db.TBL_STAFF.Any(s => selector(s) != null && selector(s).Trim() == value.Trim() && s.STF_NO != currentStaffNo))
             {
-                results.Add(new ValidationResult(string.Format(Msg.Duplicate, fieldName, value.Trim()), new[] { memberName }));
+                results.Add(new ValidationResult(string.Format(Msg.Duplicate, fieldName, value.Trim()), [memberName]));
             }
         }
 

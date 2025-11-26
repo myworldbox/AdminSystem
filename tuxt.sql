@@ -58,18 +58,6 @@
    -- Angel Chan modofied @ 20250217 ---------------------------------------------------------
   -------------------------------------------------------------------------------------------------------
   -- Conrad Kwong @ 2017-04-10, Form# HRISPT-17002, Validate Chinese Character
-
-  if p_rec.stf_dad_name is not null and is_chinese(p_str => p_rec.stf_dad_name) = 'Y' then
-    v_msg.extend;
-    v_msg(v_msg.count).msg_type:='E';
-    v_msg(v_msg.count).msg:='Chinese characters is not allowed in [Father''s Name].';
-  end if;
-
-  if p_rec.stf_mom_name is not null and is_chinese(p_str => p_rec.stf_mom_name) = 'Y' then
-    v_msg.extend;
-    v_msg(v_msg.count).msg_type:='E';
-    v_msg(v_msg.count).msg:='Chinese characters is not allowed in [Mother''s Name].';
-  end if;
   -------------------------------------------------------------------------------------------------------
 
     ------------ Not allow input of duplicate Hong Kong Identification Card Number --------
@@ -144,15 +132,9 @@
 
     ---------------- Not allow empty Date of Birth input -----------------
     --------------- Not allow date of birth being a future date -----------
-    elsif months_between(sysdate,p_rec.stf_dob)/12<0 then
-      v_msg.extend;
-      v_msg(v_msg.count).msg_type:='E';
-      v_msg(v_msg.count).msg:='[Date of Birth] cannot be a future date';
+
     --------------- Show warning if the staff is under 15 years old ------------------
-    elsif months_between(sysdate,p_rec.stf_dob)/12<15 then
-      v_msg.extend;
-      v_msg(v_msg.count).msg_type:='M';
-      v_msg(v_msg.count).msg:='This staff is under 15 years old';
+
     end if;
 
     ----------- Staff gender must be entered ------------------
