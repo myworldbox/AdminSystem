@@ -33,6 +33,7 @@ namespace AdminSystem.Models.Tables_new
             public const string NameTooLong = "The combined length of surname, space, and given name should not be more than 75 characters.";
             public const string MobileRequired = "Mobile and Country Code are mandatory fields.";
             public const string IdOrPassportRequired = "Please input [HK ID No.] or/and [Passport No.]";
+            public const string PassportCountryRequired = "Please input [HK ID No.] or/and [Passport No.]";
             public const string BothOrNone = "{0} and {1} must be both filled or both empty.";
             public const string SpouseRequired = "[Spouse Name] is compulsory if [marital status] is set to \"Married\". Please enter [spouse name] or set [marital status] to \"Married without spouse ID\".";
             public const string Duplicate = "This [{0}] ({1}) is already used in our staff records";
@@ -463,6 +464,24 @@ namespace AdminSystem.Models.Tables_new
 
             if (thisChanged || pairChanged)
                 return new ValidationResult(Msg.PayrollLockedBank);
+
+            return ValidationResult.Success;
+        }
+    }
+
+    public class RequireHkIdOrPassportAttribute : ValidationAttribute
+    {
+        protected override ValidationResult? IsValid(object? value, ValidationContext ctx)
+        {
+            var instance = ctx.ObjectInstance as TBL_STAFF_DTO;
+            if (instance == null)
+                return ValidationResult.Success;
+
+            bool hasHkId = !string.IsNullOrWhiteSpace(instance.STF_HKID);
+            bool hasPassport = !string.IsNullOrWhiteSpace(instance.STF_PP_NO);
+
+            if (!hasHkId && !hasPassport)
+                return new ValidationResult(Msg.IdOrPassportRequired);
 
             return ValidationResult.Success;
         }

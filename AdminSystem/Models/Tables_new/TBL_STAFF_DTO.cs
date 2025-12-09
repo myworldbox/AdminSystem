@@ -70,6 +70,7 @@ namespace AdminSystem.Models.Tables_new
         [DisplayName("HKID No.")]
         [HkIdFullValidation]
         [UniqueHkIdOrPassport(nameof(STF_PP_NO))]
+        [PermitPairRequired(nameof(STF_PP_ISCNTY))]
         public string? STF_HKID { get; set; }
 
         [DisplayName("Passport No.")]
@@ -78,7 +79,8 @@ namespace AdminSystem.Models.Tables_new
 
         [DisplayName("Passport Issue Country")]
         [NoChinese]
-        [RequiredIfOtherHasValue(nameof(STF_PP_NO), ErrorMessage = "Passport Issue Country is required when Passport No. is provided.")]
+        [RequiredIfOtherHasValue(nameof(STF_PP_NO), ErrorMessage = Msg.PassportCountryRequired)]
+        [PermitPairRequired(nameof(STF_PP_NO))]
         public string? STF_PP_ISCNTY { get; set; }
 
         [DisplayName("Nationality")]
@@ -189,5 +191,7 @@ namespace AdminSystem.Models.Tables_new
 
         [CrossCenterContractWarning]
         public string CrossCenterTrigger => STF_NO;
+        [RequireHkIdOrPassport]
+        public string IdValidationTrigger => STF_NO; // dummy property
     }
 }
