@@ -5,24 +5,15 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AdminSystem.Web.Controllers
 {
-    public class SummaryController : Controller
+    public class SummaryController(AppDbContext context, IMapper mapper) : Controller
     {
-        private readonly AppDbContext _context;
-        private readonly IMapper _mapper;
-
-        public SummaryController(AppDbContext context, IMapper mapper)
-        {
-            _context = context;
-            _mapper = mapper;
-        }
-
         public IActionResult Index()
         {
-            var summaries = _context.vw_CustomerSummary.ToList();
+            var summaries = context.vw_CustomerSummary.ToList();
 
             ViewData["Title"] = "Summary";
 
-            var data = _mapper.Map<IEnumerable<SummaryViewModel>>(summaries);
+            var data = mapper.Map<IEnumerable<SummaryViewModel>>(summaries);
 
             return View(data);
         }

@@ -12,23 +12,12 @@ using System.Text.Json;
 
 namespace AdminSystem.Web.Controllers
 {
-    public class InfoController : Controller
+    public class InfoController(IUnitOfWork unitOfWork, IMapper mapper, IMemoryCache cache) : Controller
     {
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly IMapper _mapper;
-        private readonly IMemoryCache _cache;
-
-        public InfoController(IUnitOfWork unitOfWork, IMapper mapper, IMemoryCache cache)
-        {
-            _unitOfWork = unitOfWork;
-            _mapper = mapper;
-            _cache = cache;
-        }
-
         public IActionResult Index(string search = "", string sort = "Id", Enums.Order order = Enums.Order.asc, Enums.Category? category = null)
         {
             // start with base query
-            var query = _unitOfWork.Infos.Get();
+            var query = unitOfWork.Infos.Get();
 
             if (!string.IsNullOrEmpty(search))
             {
@@ -50,14 +39,14 @@ namespace AdminSystem.Web.Controllers
 
            var infos = query.ToList();
 
-            var data = _mapper.Map<IEnumerable<InfoViewModel>>(infos);
+            var data = mapper.Map<IEnumerable<InfoViewModel>>(infos);
             var cacheKey = Guid.NewGuid().ToString();
 
-            _cache.Set(cacheKey, data, TimeSpan.FromMinutes(10));
+            cache.Set(cacheKey, data, TimeSpan.FromMinutes(10));
 
             if (ViewBag.CacheKey != null)
             {
-                _cache.Remove(ViewBag.CacheKey);
+                cache.Remove(ViewBag.CacheKey);
             }
 
             ViewBag.Search = search;
@@ -82,9 +71,9 @@ namespace AdminSystem.Web.Controllers
 
         public IActionResult Details(int id)
         {
-            var info = _unitOfWork.Infos.GetById(id);
+            var info = unitOfWork.Infos.GetById(id);
             if (info == null) return NotFound();
-            var data = _mapper.Map<InfoViewModel>(info);
+            var data = mapper.Map<InfoViewModel>(info);
             return View(data);
         }
 
@@ -100,9 +89,9 @@ namespace AdminSystem.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                var data = _mapper.Map<客戶資料>(info);
-                _unitOfWork.Infos.Insert(data);
-                _unitOfWork.Save();
+                var data = mapper.Map<客戶資料>(info);
+                unitOfWork.Infos.Insert(data);
+                unitOfWork.Save();
                 return RedirectToAction(nameof(Index));
             }
             ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums.Category)));
@@ -111,10 +100,10 @@ namespace AdminSystem.Web.Controllers
 
         public IActionResult Edit(int id)
         {
-            var info = _unitOfWork.Infos.GetById(id);
+            var info = unitOfWork.Infos.GetById(id);
             if (info == null) return NotFound();
             ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums.Category)), info.客戶分類);
-            var data = _mapper.Map<InfoViewModel>(info);
+            var data = mapper.Map<InfoViewModel>(info);
             return View(data);
         }
 
@@ -124,9 +113,9 @@ namespace AdminSystem.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                var data = _mapper.Map<客戶資料>(info);
-                _unitOfWork.Infos.Update(data);
-                _unitOfWork.Save();
+                var data = mapper.Map<客戶資料>(info);
+                unitOfWork.Infos.Update(data);
+                unitOfWork.Save();
                 return RedirectToAction(nameof(Index));
             }
             ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums.Category)), info.客戶分類);
@@ -135,9 +124,9 @@ namespace AdminSystem.Web.Controllers
 
         public IActionResult Delete(int id)
         {
-            var info = _unitOfWork.Infos.GetById(id);
+            var info = unitOfWork.Infos.GetById(id);
             if (info == null) return NotFound();
-            var data = _mapper.Map<InfoViewModel>(info);
+            var data = mapper.Map<InfoViewModel>(info);
             return View(data);
         }
 
@@ -145,14 +134,14 @@ namespace AdminSystem.Web.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult DeleteConfirmed(int id)
         {
-            _unitOfWork.Infos.Delete(id);
-            _unitOfWork.Save();
+            unitOfWork.Infos.Delete(id);
+            unitOfWork.Save();
             return RedirectToAction(nameof(Index));
         }
 
         public FileResult Export(string cacheKey)
         {
-            var info = _cache.Get<IEnumerable<InfoViewModel>>(cacheKey);
+            var info = cache.Get<IEnumerable<InfoViewModel>>(cacheKey);
 
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("客戶資料");
@@ -189,7 +178,7 @@ namespace AdminSystem.Web.Controllers
         {
             if (disposing)
             {
-                _unitOfWork.Dispose();
+                unitOfWork.Dispose();
             }
             base.Dispose(disposing);
         }

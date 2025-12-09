@@ -15,22 +15,11 @@ using System.Text.Json;
 
 namespace AdminSystem.Web.Controllers
 {
-    public class ContactController : Controller
+    public class ContactController(IUnitOfWork unitOfWork, IMapper mapper, IMemoryCache cache) : Controller
     {
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly IMapper _mapper;
-        private readonly IMemoryCache _cache;
-
-        public ContactController(IUnitOfWork unitOfWork, IMapper mapper, IMemoryCache cache)
-        {
-            _unitOfWork = unitOfWork;
-            _mapper = mapper;
-            _cache = cache;
-        }
-
         public IActionResult Index(string search = "", string jobTitle = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
         {
-            var query = _unitOfWork.Contacts.Get();
+            var query = unitOfWork.Contacts.Get();
 
             if (!string.IsNullOrEmpty(search))
             {
@@ -52,23 +41,23 @@ namespace AdminSystem.Web.Controllers
 
             var contacts = query.ToList();
 
-            var data = _mapper.Map<IEnumerable<ContactViewModel>>(contacts);
+            var data = mapper.Map<IEnumerable<ContactViewModel>>(contacts);
 
             var cacheKey = Guid.NewGuid().ToString();
 
-            _cache.Set(cacheKey, data, TimeSpan.FromMinutes(10));
+            cache.Set(cacheKey, data, TimeSpan.FromMinutes(10));
 
             if (ViewBag.CacheKey != null)
             {
-                _cache.Remove(ViewBag.CacheKey);
+                cache.Remove(ViewBag.CacheKey);
             }
 
             ViewBag.Search = search;
             ViewBag.JobTitle = jobTitle;
             ViewBag.Sort = sort;
             ViewBag.Order = ((int)order + 1) % Enum.GetValues<Enums.Order>().Length;
-            ViewBag.JobTitles = new SelectList(_unitOfWork.Contacts.Get().Select(c => c.職稱).Distinct().ToList(), jobTitle);
-            ViewBag.Customers = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱");
+            ViewBag.JobTitles = new SelectList(unitOfWork.Contacts.Get().Select(c => c.職稱).Distinct().ToList(), jobTitle);
+            ViewBag.Customers = new SelectList(unitOfWork.Infos.Get(), "Id", "客戶名稱");
             ViewBag.CacheKey = cacheKey;
             ViewData["Title"] = "Contact";
 
@@ -77,15 +66,15 @@ namespace AdminSystem.Web.Controllers
 
         public IActionResult Details(int id)
         {
-            var contact = _unitOfWork.Contacts.GetById(id);
+            var contact = unitOfWork.Contacts.GetById(id);
             if (contact == null) return NotFound();
-            var data = _mapper.Map<ContactViewModel>(contact);
+            var data = mapper.Map<ContactViewModel>(contact);
             return View(data);
         }
 
         public IActionResult Create()
         {
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱");
+            ViewBag.客戶Id = new SelectList(unitOfWork.Infos.Get(), "Id", "客戶名稱");
             return View();
         }
 
@@ -97,9 +86,9 @@ namespace AdminSystem.Web.Controllers
             {
                 try
                 {
-                    var data = _mapper.Map<客戶聯絡人>(contact);
-                    _unitOfWork.Contacts.Insert(data);
-                    _unitOfWork.Save();
+                    var data = mapper.Map<客戶聯絡人>(contact);
+                    unitOfWork.Contacts.Insert(data);
+                    unitOfWork.Save();
                     return RedirectToAction(nameof(Index));
                 }
                 catch (InvalidOperationException ex)
@@ -111,16 +100,16 @@ namespace AdminSystem.Web.Controllers
                     ModelState.AddModelError("", $"無法保存資料：{ex.InnerException?.Message ?? ex.Message}");
                 }
             }
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", contact.客戶Id);
+            ViewBag.客戶Id = new SelectList(unitOfWork.Infos.Get(), "Id", "客戶名稱", contact.客戶Id);
             return View(contact);
         }
 
         public IActionResult Edit(int id)
         {
-            var contact = _unitOfWork.Contacts.GetById(id);
+            var contact = unitOfWork.Contacts.GetById(id);
             if (contact == null) return NotFound();
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", contact.客戶Id);
-            var data = _mapper.Map<ContactViewModel>(contact);
+            ViewBag.客戶Id = new SelectList(unitOfWork.Infos.Get(), "Id", "客戶名稱", contact.客戶Id);
+            var data = mapper.Map<ContactViewModel>(contact);
             return View(data);
         }
 
@@ -132,9 +121,9 @@ namespace AdminSystem.Web.Controllers
             {
                 try
                 {
-                    var data = _mapper.Map<客戶聯絡人>(contact);
-                    _unitOfWork.Contacts.Update(data);
-                    _unitOfWork.Save();
+                    var data = mapper.Map<客戶聯絡人>(contact);
+                    unitOfWork.Contacts.Update(data);
+                    unitOfWork.Save();
                     return RedirectToAction(nameof(Index));
                 }
                 catch (InvalidOperationException ex)
@@ -146,15 +135,15 @@ namespace AdminSystem.Web.Controllers
                     ModelState.AddModelError("", $"無法保存資料：{ex.InnerException?.Message ?? ex.Message}");
                 }
             }
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", contact.客戶Id);
+            ViewBag.客戶Id = new SelectList(unitOfWork.Infos.Get(), "Id", "客戶名稱", contact.客戶Id);
             return View(contact);
         }
 
         public IActionResult Delete(int id)
         {
-            var contact = _unitOfWork.Contacts.GetById(id);
+            var contact = unitOfWork.Contacts.GetById(id);
             if (contact == null) return NotFound();
-            var data = _mapper.Map<ContactViewModel>(contact);
+            var data = mapper.Map<ContactViewModel>(contact);
             return View(data);
         }
 
@@ -164,8 +153,8 @@ namespace AdminSystem.Web.Controllers
         {
             try
             {
-                _unitOfWork.Contacts.Delete(id);
-                _unitOfWork.Save();
+                unitOfWork.Contacts.Delete(id);
+                unitOfWork.Save();
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateException ex)
@@ -177,7 +166,7 @@ namespace AdminSystem.Web.Controllers
 
         public IActionResult Export(string cacheKey)
         {
-            var contact = _cache.Get<IEnumerable<ContactViewModel>>(cacheKey);
+            var contact = cache.Get<IEnumerable<ContactViewModel>>(cacheKey);
 
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("客戶聯絡人");
@@ -208,7 +197,7 @@ namespace AdminSystem.Web.Controllers
         {
             if (disposing)
             {
-                _unitOfWork?.Dispose();
+                unitOfWork?.Dispose();
             }
             base.Dispose(disposing);
         }
