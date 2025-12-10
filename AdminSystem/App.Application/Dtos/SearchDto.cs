@@ -10,6 +10,6 @@ namespace AdminSystem.Application.Dtos
         string OrderName = "Id",
         Enums.Order Order = Enums.Order.asc,
         int Page = 1,
-        int PageSize = 10
+        int PageSize = 3
     );
 }

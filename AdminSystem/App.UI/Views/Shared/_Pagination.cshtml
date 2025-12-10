@@ -1,0 +1,126 @@
+﻿@using System.Text.Json
+@using AdminSystem.Domain.Entities
+@using AdminSystem.Application.Dtos
+@using static AdminSystem.Domain.Enums
+@model dynamic
+
+@{
+    var currentPage = Model.SearchDto.Page;
+    var pageSize = Model.SearchDto.PageSize;
+    var totalRecords = Model.TotalRecords;
+    var totalPages = Model.TotalPages;
+
+    var fromRecord = totalRecords == 0 ? 0 : (currentPage - 1) * pageSize + 1;
+    var toRecord = totalRecords == 0 ? 0 : Math.Min(currentPage * pageSize, totalRecords);
+
+    var baseRoute = new Dictionary<string, string>
+    {
+        { "SearchTerm", Model.SearchDto.SearchTerm ?? "" },
+        { "OrderName", "" },
+        { "Order", Model.SearchDto.Order.ToString() }
+    };
+}
+
+@if (totalPages > 1)
+{
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center flex-wrap gap-2">
+            <!-- Previous -->
+            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["Page"] = (currentPage - 1).ToString() })"
+                   tabindex="-1">«</a>
+            </li>
+
+            <!-- Page Numbers (simple: show up to 10 pages centered around current) -->
+            @{
+                int pagerStart = Math.Max(1, currentPage - 5);
+                int pagerEnd = Math.Min(totalPages, currentPage + 4);
+
+                if (pagerEnd - pagerStart + 1 < 10)
+                {
+                    if (currentPage < totalPages / 2)
+                        pagerEnd = Math.Min(totalPages, pagerStart + 9);
+                    else
+                        pagerStart = Math.Max(1, pagerEnd - 9);
+                }
+            }
+
+            @if (pagerStart > 1)
+            {
+                <li class="page-item"><a class="page-link" asp-action="Index" asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["Page"] = "1" })">1</a></li>
+                if (pagerStart > 2)
+                {
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                }
+            }
+
+            @for (int i = pagerStart; i <= pagerEnd; i++)
+            {
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["Page"] = i.ToString() })">@i</a>
+                </li>
+            }
+
+            @if (pagerEnd < totalPages)
+            {
+                if (pagerEnd < totalPages - 1)
+                {
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                }
+                <li class="page-item">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["Page"] = totalPages.ToString() })">@totalPages</a>
+                </li>
+            }
+
+            <!-- Next -->
+            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["Page"] = (currentPage + 1).ToString() })">»</a>
+            </li>
+
+            <!-- Go to page -->
+            <li class="page-item d-flex align-items-center ms-3">
+                <span class="text-muted small me-2">Go to</span>
+                <input type="number" id="pageInput" min="1" max="@totalPages"
+                       value="@currentPage" class="form-control form-control-sm" style="width:70px;">
+                <button type="button" class="btn btn-outline-primary btn-sm ms-1" onclick="goToPage()">
+                    Go
+                </button>
+            </li>
+        </ul>
+    </nav>
+}
+
+<script>
+    function goToPage() {
+        const input = document.getElementById('pageInput');
+        let page = parseInt(input.value, 10);
+
+        if (isNaN(page) || page < 1) page = 1;
+        if (page > @Model.TotalPages) page = @Model.TotalPages;
+
+        // Start from the current URL (keeps SearchTerm, Order, OrderName, etc.)
+        const params = new URLSearchParams(window.location.search);
+        params.set('Page', page); // only override the Page
+
+        // Build URL with the same controller/action
+        const baseUrl = '@Url.Action(Context.Request.RouteValues["action"]?.ToString(),Context.Request.RouteValues["controller"]?.ToString())';
+
+        window.location.href = baseUrl + '?' + params.toString();
+    }
+
+    // Allow pressing Enter in the input field
+    document.getElementById('pageInput')?.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            goToPage();
+        }
+    });
+</script>

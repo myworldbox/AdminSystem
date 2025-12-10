@@ -154,7 +154,7 @@
             </table>
         </div>
 
-        <!-- 分頁區塊同上，可直接複製 Contact 的分頁程式碼 -->
-        <!--（省略重複，與上面完全相同） -->
+        @await Html.PartialAsync("_Pagination", Model)
+
     </div>
 </div>
