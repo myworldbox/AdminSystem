@@ -1,4 +1,5 @@
 using AdminSystem.Application.Helpers;
+using AdminSystem.Application.Services;
 using AdminSystem.Application.ViewModels;
 using AdminSystem.Infrastructure.Data;
 using AdminSystem.Infrastructure.Repositories;
@@ -56,6 +57,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped<IInfoService, InfoService>();
 
 builder.Services.AddAutoMapper(config => config.AddProfile<MappingHelper>());
 

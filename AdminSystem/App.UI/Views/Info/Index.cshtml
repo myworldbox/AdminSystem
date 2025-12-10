@@ -5,70 +5,128 @@
 @model PagedResultDto<客戶資料>
 
 @{
-    ViewData["Title"] = "Info";
+    ViewData["Title"] = "客戶資料管理";
 
-    var currentPage = Model.searchDto.Page;
-    var pageSize = Model.searchDto.PageSize;
+    var currentPage = Model.SearchDto.Page;
+    var pageSize = Model.SearchDto.PageSize;
     var totalRecords = Model.TotalRecords;
     var totalPages = Model.TotalPages;
 
     var fromRecord = totalRecords == 0 ? 0 : (currentPage - 1) * pageSize + 1;
     var toRecord = totalRecords == 0 ? 0 : Math.Min(currentPage * pageSize, totalRecords);
 
-    var routeValues = new Dictionary<string, string>
+    // 排序方向切換
+    Order nextOrder = Model.SearchDto.Order == Order.asc ? Order.desc : Order.asc;
+
+    // 基礎路由參數（用於排序連結）
+    var baseRoute = new Dictionary<string, string>
     {
-        { "searchTerm", Model.searchDto.SearchTerm ?? "" },
-        { "order", Model.searchDto.Order.ToString() }
+        { "SearchTerm", Model.SearchDto.SearchTerm ?? "" },
+        { "OrderName", "" },
+        { "Order", nextOrder.ToString() },
+        { "Page", "1" }
     };
 }
 
-<div class="card shadow-sm">
+<div class="card shadow-sm mb-5">
     <h4 class="card-header fw-bold text-white" style="background-color: #337ab7;">
-        Customer Information
+        客戶資料管理
     </h4>
     <div class="card-body">
-        <!-- Search & Filters -->
+
+        <!-- 搜尋表單 -->
         <form asp-action="Index" method="get" class="mb-4">
             <div class="row g-3 align-items-end">
                 <div class="col-lg-6 col-md-8">
-                    <label for="searchTerm" class="form-label">Search</label>
-                    <input id="searchTerm" type="text" name="searchTerm"
-                           value="@Model.searchDto.SearchTerm"
-                           class="form-control"
-                           placeholder="Name, HKID, Phone, Email..." />
+                    <label class="form-label">搜尋關鍵字</label>
+                    <input type="text" name="SearchTerm" value="@Model.SearchDto.SearchTerm"
+                           class="form-control" placeholder="客戶名稱、統一編號、電話、地址、Email..." />
                 </div>
                 <div class="col-lg-6 col-md-4 text-md-end">
-                    <button type="submit" class="btn btn-primary">Search</button>
-                    <a asp-action="Index" class="btn btn-outline-secondary ms-2">Clear</a>
+                    <button type="submit" class="btn btn-primary">搜尋</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary ms-2">清除</a>
+                    <a asp-action="Create" class="btn btn-success ms-2">
+                        新增客戶
+                    </a>
                 </div>
             </div>
-            <input type="hidden" name="order" value="@Model.searchDto.Order" />
+            <input type="hidden" name="OrderName" value="@Model.SearchDto.OrderName" />
+            <input type="hidden" name="Order" value="@Model.SearchDto.Order" />
         </form>
 
-        <!-- Summary + Create Button -->
+        <!-- 匯出 Excel（不再用 cacheKey） -->
+        <form asp-action="Export" method="get" class="d-inline mb-3">
+            @foreach (var key in Context.Request.Query.Keys)
+            {
+                @foreach (var value in Context.Request.Query[key])
+                {
+                    <input type="hidden" name="@key" value="@value" />
+                }
+            }
+            <button type="submit" class="btn btn-success">
+                匯出 Excel
+            </button>
+        </form>
+
+        <!-- 資料統計 -->
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <small class="text-muted">
-                Showing <strong>@(fromRecord != toRecord ? $"{fromRecord} – {toRecord}" : fromRecord)</strong> of <strong>@totalRecords</strong> records
+                顯示 <strong>@(fromRecord != toRecord ? $"{fromRecord} – {toRecord}" : fromRecord)</strong> 
+                筆，共 <strong>@totalRecords</strong> 筆記錄
             </small>
-            <a asp-action="Create" asp-controller="Info" class="btn btn-success btn-sm">
-                <i class="fas fa-plus"></i> Create New
-            </a>
-        </a>
         </div>
 
-        <!-- Table -->
+        <!-- 表格 -->
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>@Html.ActionLink("Customer Name", "Index", new { sort = "客戶名稱", order = ViewBag.Order, search = ViewBag.Search }, new { @class = "sortable" })</th>
-                        <th>@Html.ActionLink("統一編號", "Index", new { sort = "統一編號", order = ViewBag.Order, search = ViewBag.Search }, new { @class = "sortable" })</th>
-                        <th>@Html.ActionLink("Phone", "Index", new { sort = "電話", order = ViewBag.Order, search = ViewBag.Search }, new { @class = "sortable" })</th>
-                        <th>@Html.ActionLink("Fax", "Index", new { sort = "傳真", order = ViewBag.Order, search = ViewBag.Search }, new { @class = "sortable" })</th>
-                        <th>@Html.ActionLink("Address", "Index", new { sort = "地址", order = ViewBag.Order, search = ViewBag.Search }, new { @class = "sortable" })</th>
-                        <th>@Html.ActionLink("Email", "Index", new { sort = "Email", order = ViewBag.Order, search = ViewBag.Search }, new { @class = "sortable" })</th>
-                        <th>@Html.ActionLink("Category", "Index", new { sort = "客戶分類", order = ViewBag.Order, search = ViewBag.Search }, new { @class = "sortable" })</th>
-                        <th class="text-center">Actions</th>
+                        <th>
+                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "客戶名稱" })">
+                                客戶名稱
+                                @if (Model.SearchDto.OrderName == "客戶名稱")
+                                {
+                                    <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "統一編號" })">
+                                統一編號
+                                @if (Model.SearchDto.OrderName == "統一編號") { <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i> }
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "電話" })">
+                                電話
+                                @if (Model.SearchDto.OrderName == "電話") { <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i> }
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "傳真" })">
+                                傳真
+                                @if (Model.SearchDto.OrderName == "傳真") { <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i> }
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "地址" })">
+                                地址
+                                @if (Model.SearchDto.OrderName == "地址") { <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i> }
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "Email" })">
+                                Email
+                                @if (Model.SearchDto.OrderName == "Email") { <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i> }
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "客戶分類" })">
+                                客戶分類
+                                @if (Model.SearchDto.OrderName == "客戶分類") { <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i> }
+                            </a>
+                        </th>
+                        <th class="text-center">操作</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -85,19 +143,10 @@
                                 <td>@item.Email</td>
                                 <td>@item.客戶分類</td>
                                 <td class="text-center">
-                                    <a asp-action="Details" asp-controller="Info" asp-route-id="@item.Id"
-                                       class="btn btn-sm btn-outline-dark" title="Details">
-                                        Details
-                                    </a>
-                                    <a asp-action="Edit" asp-controller="Info" asp-route-id="@item.Id"
-                                       class="btn btn-sm btn-outline-primary" title="Edit">
-                                        Edit
-                                    </a>
-                                    <a asp-action="Delete" asp-controller="Info" asp-route-id="@item.Id"
-                                       class="btn btn-sm btn-outline-danger" title="Delete"
-                                       onclick="return confirm('Are you sure you want to delete customer:\n@item.客戶名稱?\n\nThis action cannot be undone.');">
-                                        Delete
-                                    </a>
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark">詳細</a>
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">編輯</a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger"
+                                       onclick="return confirm('確定要刪除客戶「@item.客戶名稱」嗎？\n\n此動作無法復原。');">刪除</a>
                                 </td>
                             </tr>
                         }
@@ -105,132 +154,76 @@
                     else
                     {
                         <tr>
-                            <td colspan="8" class="text-center py-5 text-muted">
-                                No customer records found.
-                            </td>
+                            <td colspan="8" class="text-center py-5 text-muted">尚未有任何客戶資料</td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
 
-        <!-- Pagination -->
+        <!-- 分頁（與 Contact / Bank 完全相同） -->
         @if (totalPages > 1)
         {
             <nav aria-label="Page navigation" class="mt-4">
                 <ul class="pagination justify-content-center flex-wrap gap-2">
+
                     <!-- Previous -->
                     <li class="page-item @(currentPage == 1 ? "disabled" : "")">
                         <a class="page-link"
                            asp-action="Index"
-                           asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = (currentPage - 1).ToString() })"
-                           tabindex="-1">«</a>
+                           asp-all-route-data="@(new Dictionary<string, string> {
+                               ["SearchTerm"] = Model.SearchDto.SearchTerm ?? "",
+                               ["OrderName"] = Model.SearchDto.OrderName,
+                               ["Order"] = Model.SearchDto.Order.ToString(),
+                               ["Page"] = (currentPage - 1).ToString()
+                           })">Previous</a>
                     </li>
 
-                    <!-- Page Numbers (simple: show up to 10 pages centered around current) -->
-                    @{
-                        int pagerStart = Math.Max(1, currentPage - 5);
-                        int pagerEnd = Math.Min(totalPages, currentPage + 4);
-
-                        if (pagerEnd - pagerStart + 1 < 10)
+                    @{ 
+                        int start = Math.Max(1, currentPage - 5);
+                        int end = Math.Min(totalPages, currentPage + 4);
+                        if (end - start + 1 < 10)
                         {
-                            if (currentPage < totalPages / 2)
-                                pagerEnd = Math.Min(totalPages, pagerStart + 9);
-                            else
-                                pagerStart = Math.Max(1, pagerEnd - 9);
+                            if (currentPage < totalPages / 2) end = Math.Min(totalPages, start + 9);
+                            else start = Math.Max(1, end - 9);
                         }
                     }
 
-                    @if (pagerStart > 1)
+                    @if (start > 1)
                     {
-                        <li class="page-item"><a class="page-link" asp-action="Index" asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = "1" })">1</a></li>
-                        if (pagerStart > 2)
-                        {
-                            <li class="page-item disabled"><span class="page-link">…</span></li>
-                        }
+                        <li class="page-item"><a class="page-link" asp-action="Index" asp-all-route-data="@(new Dictionary<string, string> { ["Page"] = "1", ["SearchTerm"] = Model.SearchDto.SearchTerm ?? "", ["OrderName"] = Model.SearchDto.OrderName, ["Order"] = Model.SearchDto.Order.ToString() })">1</a></li>
+                        if (start > 2) { <li class="page-item disabled"><span class="page-link">...</span></li> }
                     }
 
-                    @for (int i = pagerStart; i <= pagerEnd; i++)
+                    @for (int i = start; i <= end; i++)
                     {
                         <li class="page-item @(i == currentPage ? "active" : "")">
                             <a class="page-link"
                                asp-action="Index"
-                               asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = i.ToString() })">@i</a>
+                               asp-all-route-data="@(new Dictionary<string, string> { ["Page"] = i.ToString(), ["SearchTerm"] = Model.SearchDto.SearchTerm ?? "", ["OrderName"] = Model.SearchDto.OrderName, ["Order"] = Model.SearchDto.Order.ToString() })">@i</a>
                         </li>
                     }
 
-                    @if (pagerEnd < totalPages)
+                    @if (end < totalPages)
                     {
-                        if (pagerEnd < totalPages - 1)
-                        {
-                            <li class="page-item disabled"><span class="page-link">…</span></li>
-                        }
-                        <li class="page-item">
-                            <a class="page-link"
-                               asp-action="Index"
-                               asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = totalPages.ToString() })">@totalPages</a>
-                        </li>
+                        if (end < totalPages - 1) { <li class="page-item disabled"><span class="page-link">...</span></li> }
+                        <li class="page-item"><a class="page-link" asp-action="Index" asp-all-route-data="@(new Dictionary<string, string> { ["Page"] = totalPages.ToString(), ["SearchTerm"] = Model.SearchDto.SearchTerm ?? "", ["OrderName"] = Model.SearchDto.OrderName, ["Order"] = Model.SearchDto.Order.ToString() })">@totalPages</a></li>
                     }
 
                     <!-- Next -->
                     <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
                         <a class="page-link"
                            asp-action="Index"
-                           asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = (currentPage + 1).ToString() })">»</a>
+                           asp-all-route-data="@(new Dictionary<string, string> {
+                               ["SearchTerm"] = Model.SearchDto.SearchTerm ?? "",
+                               ["OrderName"] = Model.SearchDto.OrderName,
+                               ["Order"] = Model.SearchDto.Order.ToString(),
+                               ["Page"] = (currentPage + 1).ToString()
+                           })">Next</a>
                     </li>
 
-                    <!-- Go to page -->
-                    <li class="page-item d-flex align-items-center ms-3">
-                        <span class="text-muted small me-2">Go to</span>
-                        <input type="number" id="pageInput" min="1" max="@totalPages"
-                               value="@currentPage" class="form-control form-control-sm" style="width:70px;">
-                        <button type="button" class="btn btn-outline-primary btn-sm ms-1" onclick="goToPage()">
-                            Go
-                        </button>
-                    </li>
                 </ul>
             </nav>
         }
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        function confirmDelete(id, name) {
-            if (confirm(`Are you sure you want to delete customer:\n${name}?\n\nThis action cannot be undone.`)) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '@Url.Action("Delete", "Info")/' + encodeURIComponent(id);
-
-                // CSRF token (if you use antiforgery)
-                const token = document.querySelector('input[name="__RequestVerificationToken"]');
-                if (token) {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = token.getAttribute('name');
-                    input.value = token.value;
-                    form.appendChild(input);
-                }
-
-                document.body.appendChild(form);
-                form.submit();
-            }
-        }
-
-        function goToPage() {
-            const input = document.getElementById('pageInput');
-            let page = parseInt(input.value, 10);
-            if (isNaN(page) || page < 1) page = 1;
-            if (page > @Model.TotalPages) page = @Model.TotalPages;
-
-            const params = new URLSearchParams(window.location.search);
-            params.set('page', page);
-            window.location = '@Url.Action("Index", "Info")?' + params.toString();
-        }
-
-        // Press Enter in the input → go
-        document.getElementById('pageInput')?.addEventListener('keypress', e => {
-            if (e.key === 'Enter') goToPage();
-        });
-    </script>
-}

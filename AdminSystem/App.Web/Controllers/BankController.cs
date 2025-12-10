@@ -1,4 +1,5 @@
-﻿using AdminSystem.Application.ViewModels;
+﻿using AdminSystem.Application.Dtos;
+using AdminSystem.Application.ViewModels;
 using AdminSystem.Domain;
 using AdminSystem.Domain.Entities;
 using AdminSystem.Infrastructure.Repositories;
@@ -8,6 +9,7 @@ using DocumentFormat.OpenXml.Drawing.Diagrams;
 using DocumentFormat.OpenXml.Office.CustomUI;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.VisualBasic;
 using System.Diagnostics.Contracts;
@@ -19,45 +21,49 @@ namespace AdminSystem.Web.Controllers
 {
     public class BankController(IUnitOfWork _unitOfWork, IMapper _mapper, IMemoryCache _cache) : Controller
     {
-        public ActionResult Index(string search = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
+        public async Task<IActionResult> Index(SearchDto searchDto)
         {
-            Expression<Func<客戶銀行資訊, bool>>? filter = null;
-            if (!string.IsNullOrEmpty(search))
+            var query = _unitOfWork.Banks.Get();
+
+            // 搜尋
+            if (!string.IsNullOrEmpty(searchDto.SearchTerm))
             {
-                filter = b => 
-                b.銀行名稱.Contains(search) ||
-                b.銀行代碼.ToString().Contains(search) ||
-                b.分行代碼.ToString().Contains(search) ||
-                b.帳戶名稱.Contains(search) ||
-                b.帳戶號碼.ToString().Contains(search);
+                string term = searchDto.SearchTerm.ToUpper();
+                query = query.Where(b =>
+                    b.銀行名稱.Contains(term) ||
+                    b.銀行代碼.ToString().Contains(term) ||
+                    b.分行代碼.ToString().Contains(term) ||
+                    b.帳戶名稱.Contains(term) ||
+                    b.帳戶號碼.Contains(term));
             }
 
-            Func<IQueryable<客戶銀行資訊>, IOrderedQueryable<客戶銀行資訊>> orderBy = q => q.OrderBy(sort + " " + order);
-            var banks = _unitOfWork.Banks.Get(filter, orderBy).ToList();
+            // 排序
+            string orderBy = searchDto.OrderName;
+            if (searchDto.Order == Enums.Order.desc)
+                orderBy += " descending";
 
-            var data = _mapper.Map<IEnumerable<BankViewModel>>(banks);
-            var cacheKey = Guid.NewGuid().ToString();
+            query = query.OrderBy(orderBy);
 
-            _cache.Set(cacheKey, data, TimeSpan.FromMinutes(10));
+            var totalRecords = await query.CountAsync();
 
-            if (ViewBag.CacheKey != null)
+            var items = await query
+                .Skip((searchDto.Page - 1) * searchDto.PageSize)
+                .Take(searchDto.PageSize)
+                .ToListAsync();
+
+            var vm = new PagedResultDto<客戶銀行資訊>
             {
-                _cache.Remove(ViewBag.CacheKey);
-            }
+                Items = items,
+                TotalRecords = totalRecords,
+                SearchDto = searchDto
+            };
 
-            ViewBag.Search = search;
-            ViewBag.Sort = sort;
-            ViewBag.Order = ((int)order + 1) % Enum.GetValues<Enums.Order>().Length;
-            ViewBag.Customers = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱");
-            ViewBag.CacheKey = cacheKey;
-            ViewData["Title"] = "Bank";
-
-            return View(data);
+            return View(vm);
         }
 
-        public ActionResult Details(int id)
+        public async Task<ActionResult> DetailsAsync(int id)
         {
-            var bank = _unitOfWork.Banks.GetById(id);
+            var bank = await _unitOfWork.Banks.GetByIdAsync(id);
             if (bank == null) return NotFound();
             var data = _mapper.Map<BankViewModel>(bank);
             return View(data);
@@ -78,7 +84,7 @@ namespace AdminSystem.Web.Controllers
             if (ModelState.IsValid)
             {
                 var data = _mapper.Map<客戶銀行資訊>(bank);
-                _unitOfWork.Banks.Insert(data);
+                await _unitOfWork.Banks.GetByIdAsync(data);
                 _unitOfWork.Save();
                 return RedirectToAction("Index");
             }
@@ -89,7 +95,7 @@ namespace AdminSystem.Web.Controllers
         [HttpGet]
         public async Task<ActionResult> Edit(int id)
         {
-            var bank = _unitOfWork.Banks.GetById(id);
+            var bank = await _unitOfWork.Banks.GetByIdAsync(id);
             if (bank == null) return NotFound();
             var data = _mapper.Map<BankViewModel>(bank);
             data.dropdown = await Populate();
@@ -103,16 +109,16 @@ namespace AdminSystem.Web.Controllers
             if (ModelState.IsValid)
             {
                 var data = _mapper.Map<客戶銀行資訊>(bank);
-                _unitOfWork.Banks.Update(data);
+                await _unitOfWork.Banks.GetByIdAsync(data);
                 _unitOfWork.Save();
                 return RedirectToAction("Index");
             }
             return View(bank);
         }
 
-        public ActionResult Delete(int id)
+        public async Task<ActionResult> DeleteAsync(int id)
         {
-            var bank = _unitOfWork.Banks.GetById(id);
+            var bank = await _unitOfWork.Banks.GetByIdAsync(id);
             if (bank == null) return NotFound();
             var data = _mapper.Map<BankViewModel>(bank);
             return View(data);
@@ -120,9 +126,9 @@ namespace AdminSystem.Web.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult DeleteConfirmed(int id)
+        public async Task<ActionResult> DeleteConfirmedAsync(int id)
         {
-            _unitOfWork.Banks.Delete(id);
+            await _unitOfWork.Banks.SoftDeleteAsync(id);
             _unitOfWork.Save();
             return RedirectToAction("Index");
         }

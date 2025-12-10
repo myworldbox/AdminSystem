@@ -1,3 +1,4 @@
+using AdminSystem.Application.Dtos;
 using AdminSystem.Application.ViewModels;
 using AdminSystem.Domain;
 using AdminSystem.Domain.Entities;
@@ -18,56 +19,57 @@ namespace AdminSystem.Web.Controllers
 {
     public class ContactController(IUnitOfWork _unitOfWork, IMapper _mapper, IMemoryCache _cache) : Controller
     {
-        public IActionResult Index(string search = "", string jobTitle = "", string sort = "Id", Enums.Order order = Enums.Order.asc)
+        public async Task<IActionResult> Index(SearchDto searchDto)
         {
             var query = _unitOfWork.Contacts.Get();
 
-            if (!string.IsNullOrEmpty(search))
+            // 搜尋
+            if (!string.IsNullOrEmpty(searchDto.SearchTerm))
             {
+                string term = searchDto.SearchTerm.ToUpper();
                 query = query.Where(c =>
-                    c.姓名.Contains(search) ||
-                    c.Email.Contains(search) ||
-                    c.職稱.Contains(search) ||
-                    c.手機 != null && c.手機.Contains(search) ||
-                    c.電話 != null && c.電話.Contains(search));
+                    c.姓名.Contains(term) ||
+                    c.Email.Contains(term) ||
+                    (c.職稱 != null && c.職稱.Contains(term)) ||
+                    (c.手機 != null && c.手機.Contains(term)) ||
+                    (c.電話 != null && c.電話.Contains(term)));
             }
 
-            if (!string.IsNullOrEmpty(jobTitle) && jobTitle != "全部")
+            // 動態排序
+            string orderBy = searchDto.OrderName;
+            if (searchDto.Order == Enums.Order.desc)
+                orderBy += " descending";
+
+            query = query.OrderBy(orderBy);
+
+            // 總筆數
+            var totalRecords = await query.CountAsync();
+
+            // 分頁
+            var items = await query
+                .Skip((searchDto.Page - 1) * searchDto.PageSize)
+                .Take(searchDto.PageSize)
+                .ToListAsync();
+
+            var vm = new PagedResultDto<客戶聯絡人>
             {
-                query = query.Where(c => c.職稱 == jobTitle);
-            }
+                Items = items,
+                TotalRecords = totalRecords,
+                SearchDto = searchDto
+            };
 
-            // dynamic sort (requires System.Linq.Dynamic.Core)
-            query = query.OrderBy($"{sort} {order}");
+            // 為 View 準備下拉選單（職稱）
+            ViewBag.JobTitles = new SelectList(
+                await _unitOfWork.Contacts.Get().Select(c => c.職稱).Distinct().Where(t => t != null).ToListAsync(),
+                searchDto.SearchTerm
+            );
 
-            var contacts = query.ToList();
-
-            var data = _mapper.Map<IEnumerable<ContactViewModel>>(contacts);
-
-            var cacheKey = Guid.NewGuid().ToString();
-
-            _cache.Set(cacheKey, data, TimeSpan.FromMinutes(10));
-
-            if (ViewBag.CacheKey != null)
-            {
-                _cache.Remove(ViewBag.CacheKey);
-            }
-
-            ViewBag.Search = search;
-            ViewBag.JobTitle = jobTitle;
-            ViewBag.Sort = sort;
-            ViewBag.Order = ((int)order + 1) % Enum.GetValues<Enums.Order>().Length;
-            ViewBag.JobTitles = new SelectList(_unitOfWork.Contacts.Get().Select(c => c.職稱).Distinct().ToList(), jobTitle);
-            ViewBag.Customers = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱");
-            ViewBag.CacheKey = cacheKey;
-            ViewData["Title"] = "Contact";
-
-            return View(data);
+            return View(vm);
         }
 
-        public IActionResult Details(int id)
+        public async Task<IActionResult> DetailsAsync(int id)
         {
-            var contact = _unitOfWork.Contacts.GetById(id);
+            var contact = await _unitOfWork.Contacts.GetByIdAsync(id);
             if (contact == null) return NotFound();
             var data = _mapper.Map<ContactViewModel>(contact);
             return View(data);
@@ -82,14 +84,14 @@ namespace AdminSystem.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create([Bind("Id,客戶Id,職稱,姓名,Email,手機,電話")] ContactViewModel contact)
+        public async Task<IActionResult> CreateAsync([Bind("Id,客戶Id,職稱,姓名,Email,手機,電話")] ContactViewModel contact)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
                     var data = _mapper.Map<客戶聯絡人>(contact);
-                    _unitOfWork.Contacts.Insert(data);
+                    await _unitOfWork.Contacts.InsertAsync(data);
                     _unitOfWork.Save();
                     return RedirectToAction(nameof(Index));
                 }
@@ -107,7 +109,7 @@ namespace AdminSystem.Web.Controllers
 
         public async Task<IActionResult> Edit(int id)
         {
-            var contact = _unitOfWork.Contacts.GetById(id);
+            var contact = await _unitOfWork.Contacts.GetByIdAsync(id);
             if (contact == null) return NotFound();
             
             var data = _mapper.Map<ContactViewModel>(contact);
@@ -125,7 +127,7 @@ namespace AdminSystem.Web.Controllers
                 try
                 {
                     var data = _mapper.Map<客戶聯絡人>(contact);
-                    _unitOfWork.Contacts.Update(data);
+                    await _unitOfWork.Contacts.GetByIdAsync(data);
                     _unitOfWork.Save();
                     return RedirectToAction(nameof(Index));
                 }
@@ -142,9 +144,9 @@ namespace AdminSystem.Web.Controllers
             return View(contact);
         }
 
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> DeleteAsync(int id)
         {
-            var contact = _unitOfWork.Contacts.GetById(id);
+            var contact = await _unitOfWork.Contacts.GetByIdAsync(id);
             if (contact == null) return NotFound();
             var data = _mapper.Map<ContactViewModel>(contact);
             return View(data);
@@ -152,18 +154,18 @@ namespace AdminSystem.Web.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmedAsync(int id)
         {
             try
             {
-                _unitOfWork.Contacts.Delete(id);
+                await _unitOfWork.Contacts.SoftDeleteAsync(id);
                 _unitOfWork.Save();
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateException ex)
             {
                 ModelState.AddModelError("", $"無法刪除資料：{ex.InnerException?.Message ?? ex.Message}");
-                return RedirectToAction(nameof(Delete), new { id });
+                return RedirectToAction(nameof(DeleteAsync), new { id });
             }
         }
 
