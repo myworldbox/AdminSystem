@@ -1,5 +1,6 @@
 using AdminSystem.Application.Validators;
 using AdminSystem.Domain;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -27,5 +28,13 @@ namespace AdminSystem.Application.ViewModels
         public string? Email { get; set; }
         public Enums.Category? 客戶分類 { get; set; }
         public bool 是否已刪除 { get; set; }
+
+        public InfoDropdown dropdown { get; set; }
+    }
+
+    public record InfoDropdown
+    {
+        public SelectList? 客戶分類List { get; set; }
+        public SelectList? 客戶IdList { get; set; }
     }
 }

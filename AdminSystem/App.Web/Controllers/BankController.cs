@@ -1,17 +1,19 @@
-﻿using ClosedXML.Excel;
-using AdminSystem.Application.ViewModels;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc;
-using System.Linq.Expressions;
-using System.Linq.Dynamic.Core;
-using AdminSystem.Infrastructure.Repositories;
+﻿using AdminSystem.Application.ViewModels;
 using AdminSystem.Domain;
-using AutoMapper;
 using AdminSystem.Domain.Entities;
-using System.Diagnostics.Contracts;
-using System.Text.Json;
+using AdminSystem.Infrastructure.Repositories;
+using AutoMapper;
+using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Drawing.Diagrams;
+using DocumentFormat.OpenXml.Office.CustomUI;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.VisualBasic;
+using System.Diagnostics.Contracts;
+using System.Linq.Dynamic.Core;
+using System.Linq.Expressions;
+using System.Text.Json;
 
 namespace AdminSystem.Web.Controllers
 {
@@ -61,15 +63,17 @@ namespace AdminSystem.Web.Controllers
             return View(data);
         }
 
-        public ActionResult Create()
+        [HttpGet]
+        public async Task<ActionResult> Create()
         {
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱");
-            return View();
+            BankViewModel bank = new();
+            bank.dropdown = await Populate();
+            return View(bank);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind("Id,客戶Id,銀行名稱,銀行代碼,分行代碼,帳戶名稱,帳戶號碼")] BankViewModel bank)
+        public async Task<ActionResult> Create([Bind("Id,客戶Id,銀行名稱,銀行代碼,分行代碼,帳戶名稱,帳戶號碼")] BankViewModel bank)
         {
             if (ModelState.IsValid)
             {
@@ -78,22 +82,23 @@ namespace AdminSystem.Web.Controllers
                 _unitOfWork.Save();
                 return RedirectToAction("Index");
             }
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", bank.客戶Id);
+            bank.dropdown = await Populate();
             return View(bank);
         }
 
-        public ActionResult Edit(int id)
+        [HttpGet]
+        public async Task<ActionResult> Edit(int id)
         {
             var bank = _unitOfWork.Banks.GetById(id);
             if (bank == null) return NotFound();
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", bank.客戶Id);
             var data = _mapper.Map<BankViewModel>(bank);
+            data.dropdown = await Populate();
             return View(data);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind("Id,客戶Id,銀行名稱,銀行代碼,分行代碼,帳戶名稱,帳戶號碼")] BankViewModel bank)
+        public async Task<ActionResult> Edit([Bind("Id,客戶Id,銀行名稱,銀行代碼,分行代碼,帳戶名稱,帳戶號碼")] BankViewModel bank)
         {
             if (ModelState.IsValid)
             {
@@ -102,7 +107,6 @@ namespace AdminSystem.Web.Controllers
                 _unitOfWork.Save();
                 return RedirectToAction("Index");
             }
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", bank.客戶Id);
             return View(bank);
         }
 
@@ -156,13 +160,12 @@ namespace AdminSystem.Web.Controllers
             }
         }
 
-        protected override void Dispose(bool disposing)
+        private async Task<BankDropdown> Populate()
         {
-            if (disposing)
-            {
-                _unitOfWork.Dispose();
-            }
-            base.Dispose(disposing);
+            BankDropdown dropdown = new();
+            dropdown.客戶IdList = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱");
+
+            return dropdown;
         }
     }
 }

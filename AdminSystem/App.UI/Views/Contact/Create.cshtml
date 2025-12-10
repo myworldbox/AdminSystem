@@ -10,7 +10,7 @@
         <div class="form-group">
             @Html.LabelFor(model => model.客戶Id, "客戶", htmlAttributes: new { @class = "control-label col-md-2 fw-bold" })
             <div class="col-md-10">
-                @Html.DropDownList("客戶Id", (SelectList)ViewBag.客戶Id, htmlAttributes: new { @class = "form-control" })
+                @Html.DropDownList("客戶Id", Model.dropdown.客戶IdList, htmlAttributes: new { @class = "form-control" })
                 @Html.ValidationMessageFor(model => model.客戶Id, "", new { @class = "text-danger" })
             </div>
         </div>

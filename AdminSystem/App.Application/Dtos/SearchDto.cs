@@ -5,7 +5,6 @@ using AutoMapper;
 
 namespace AdminSystem.Application.Dtos
 {
-
     public record SearchDto(
         string SearchTerm,
         Enums.Order Order,

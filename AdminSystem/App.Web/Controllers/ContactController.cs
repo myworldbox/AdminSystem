@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System.Linq.Dynamic.Core;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace AdminSystem.Web.Controllers
 {
@@ -72,10 +73,11 @@ namespace AdminSystem.Web.Controllers
             return View(data);
         }
 
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱");
-            return View();
+            ContactViewModel contact = new ContactViewModel();
+            contact.dropdown = await Populate();
+            return View(contact);
         }
 
         [HttpPost]
@@ -100,22 +102,23 @@ namespace AdminSystem.Web.Controllers
                     ModelState.AddModelError("", $"無法保存資料：{ex.InnerException?.Message ?? ex.Message}");
                 }
             }
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", contact.客戶Id);
             return View(contact);
         }
 
-        public IActionResult Edit(int id)
+        public async Task<IActionResult> Edit(int id)
         {
             var contact = _unitOfWork.Contacts.GetById(id);
             if (contact == null) return NotFound();
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", contact.客戶Id);
+            
             var data = _mapper.Map<ContactViewModel>(contact);
+
+            data.dropdown = await Populate();
             return View(data);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit([Bind("Id,客戶Id,職稱,姓名,Email,手機,電話")] ContactViewModel contact)
+        public async Task<IActionResult> Edit([Bind("Id,客戶Id,職稱,姓名,Email,手機,電話")] ContactViewModel contact)
         {
             if (ModelState.IsValid)
             {
@@ -135,7 +138,7 @@ namespace AdminSystem.Web.Controllers
                     ModelState.AddModelError("", $"無法保存資料：{ex.InnerException?.Message ?? ex.Message}");
                 }
             }
-            ViewBag.客戶Id = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱", contact.客戶Id);
+            contact.dropdown = await Populate();
             return View(contact);
         }
 
@@ -193,13 +196,12 @@ namespace AdminSystem.Web.Controllers
             return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "客戶聯絡人.xlsx");
         }
 
-        protected override void Dispose(bool disposing)
+        private async Task<ContactDropdown> Populate()
         {
-            if (disposing)
-            {
-                _unitOfWork?.Dispose();
-            }
-            base.Dispose(disposing);
+            ContactDropdown dropdown = new();
+            dropdown.客戶IdList = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱");
+
+            return dropdown;
         }
     }
 }

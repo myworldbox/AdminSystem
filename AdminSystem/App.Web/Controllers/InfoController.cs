@@ -5,12 +5,14 @@ using AdminSystem.Domain.Entities;
 using AdminSystem.Infrastructure.Repositories;
 using AutoMapper;
 using ClosedXML.Excel;
+using DocumentFormat.OpenXml.EMMA;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System.Linq.Dynamic.Core;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace AdminSystem.Web.Controllers
 {
@@ -54,8 +56,7 @@ namespace AdminSystem.Web.Controllers
             {
                 Items = items,
                 TotalRecords = totalRecords,
-                CurrentPage = searchDto.Page,
-                PageSize = searchDto.PageSize
+                searchDto = searchDto
             };
 
             return View(vm);
@@ -69,10 +70,11 @@ namespace AdminSystem.Web.Controllers
             return View(data);
         }
 
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums.Category)));
-            return View();
+            InfoViewModel info = new ();
+            info.dropdown = await Populate();
+            return View(info);
         }
 
         [HttpPost]
@@ -86,22 +88,21 @@ namespace AdminSystem.Web.Controllers
                 _unitOfWork.Save();
                 return RedirectToAction(nameof(Index));
             }
-            ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums.Category)));
             return View(info);
         }
 
-        public IActionResult Edit(int id)
+        public async Task<IActionResult> Edit(int id)
         {
             var info = _unitOfWork.Infos.GetById(id);
             if (info == null) return NotFound();
-            ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums.Category)), info.客戶分類);
             var data = _mapper.Map<InfoViewModel>(info);
+            data.dropdown = await Populate();
             return View(data);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit([Bind("Id,客戶名稱,統一編號,電話,傳真,地址,Email,客戶分類")] InfoViewModel info)
+        public async Task<IActionResult> Edit([Bind("Id,客戶名稱,統一編號,電話,傳真,地址,Email,客戶分類")] InfoViewModel info)
         {
             if (ModelState.IsValid)
             {
@@ -110,7 +111,7 @@ namespace AdminSystem.Web.Controllers
                 _unitOfWork.Save();
                 return RedirectToAction(nameof(Index));
             }
-            ViewBag.客戶分類 = new SelectList(Enum.GetValues(typeof(Enums.Category)), info.客戶分類);
+            info.dropdown = await Populate();
             return View(info);
         }
 
@@ -166,13 +167,13 @@ namespace AdminSystem.Web.Controllers
                 "客戶資料.xlsx");
         }
 
-        protected override void Dispose(bool disposing)
+        private async Task<InfoDropdown> Populate()
         {
-            if (disposing)
-            {
-                _unitOfWork.Dispose();
-            }
-            base.Dispose(disposing);
+            InfoDropdown dropdown = new();
+            dropdown.客戶IdList = new SelectList(_unitOfWork.Infos.Get(), "Id", "客戶名稱");
+            dropdown.客戶分類List = new SelectList(Enum.GetValues(typeof(Enums.Category)));
+
+            return dropdown;
         }
     }
 }

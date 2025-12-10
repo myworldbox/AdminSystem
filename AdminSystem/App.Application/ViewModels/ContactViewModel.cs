@@ -1,4 +1,6 @@
 using AdminSystem.Application.Validators;
+using AutoMapper.Configuration.Annotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -24,5 +26,15 @@ namespace AdminSystem.Application.ViewModels
         [PhoneFormat]
         public string? 電話 { get; set; }
         public bool 是否已刪除 { get; set; }
+
+        [Ignore]
+        public ContactDropdown? dropdown { get; set; }
+    }
+
+    public record ContactDropdown
+    {
+
+        public SelectList? CategoryList { get; set; }
+        public SelectList? 客戶IdList { get; set; }
     }
 }

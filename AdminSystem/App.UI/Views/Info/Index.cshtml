@@ -6,57 +6,44 @@
 
 @{
     ViewData["Title"] = "Info";
-
-    // Current filter values
-    var searchTerm = Context.Request.Query["searchTerm"].ToString();
-    var area = Context.Request.Query["area"].ToString();
-    var sex = Context.Request.Query["sex"].ToString();
-    var order = Context.Request.Query["order"].ToString();
-    var sort = Context.Request.Query["sort"].ToString();
     int page = int.TryParse(Context.Request.Query["page"], out var p) ? p : 1;
     page = page < 1 ? 1 : page;
 
     var routeValues = new Dictionary<string, string>
     {
-        { "searchTerm", searchTerm },
-        { "area", area },
-        { "sex", sex },
-        { "sort", sort }
+        { "searchTerm", Model.searchDto.SearchTerm },
+        { "order", Model.searchDto.Order.ToString() }
     };
 }
 
 <div class="card shadow-sm">
     <h4 class="card-header fw-bold text-white" style="background-color: #337ab7;">
-        Customer List
+        Info
     </h4>
 
     <div class="card-body">
         <!-- Search & Filters -->
         <form asp-action="Index" method="get" class="mb-4">
-            <div class="row g-3 align-items-end">
-                <div class="col-lg-4 col-md-6">
-                    <label class="form-label">Search</label>
-                    <input type="text" name="searchTerm" value="@searchTerm" class="form-control"
+            <div class="row g-3">
+                <!-- Search box -->
+                <div class="col-lg-6 col-md-8">
+                    <label for="searchTerm" class="form-label">Search</label>
+                    <input id="searchTerm" type="text" name="searchTerm"
+                           value="@Model.searchDto.SearchTerm"
+                           class="form-control"
                            placeholder="Name, HKID, Phone, Email..." />
                 </div>
-                <div class="col-lg-2 col-md-3">
-                    <label class="form-label">Area</label>
-                    <select name="area" class="form-select" asp-items="@ViewBag.AddressAreaList">
-                        <option value="">All Areas</option>
-                    </select>
-                </div>
-                <div class="col-lg-2 col-md-3">
-                    <label class="form-label">Sex</label>
-                    <select name="sex" class="form-select" asp-items="@ViewBag.SexList">
-                        <option value="">All</option>
-                    </select>
-                </div>
-                <div class="col-lg-4 col-md-12 text-md-end">
-                    <button type="submit" class="btn btn-primary">Search</button>
-                    <a asp-action="Index" class="btn btn-outline-secondary ms-2">Clear</a>
+
+                <!-- Buttons -->
+                <div class="col-lg-6 col-md-4 d-flex align-items-end justify-content-md-end">
+                    <div>
+                        <button type="submit" class="btn btn-primary">Search</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary ms-2">Clear</a>
+                    </div>
                 </div>
             </div>
-            <input type="hidden" name="order" value="@order" />
+
+            <input type="hidden" name="order" value="@Model.searchDto.Order" />
         </form>
 
         <!-- Summary + Add Button -->
@@ -64,8 +51,8 @@
             <small class="text-muted">
                 Showing
                 <strong>
-                    @(Model.Items.Any() ? ((Model.CurrentPage - 1) * Model.PageSize + 1) : 0)
-                    – @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalRecords))
+                    @(Model.Items.Any() ? ((Model.searchDto.Page - 1) * Model.searchDto.PageSize + 1) : 0)
+                    – @(Math.Min(Model.searchDto.Page * Model.searchDto.PageSize, Model.TotalRecords))
                 </strong>
                 of <strong>@Model.TotalRecords</strong> records
             </small>
@@ -147,18 +134,18 @@
                 <ul class="pagination justify-content-center flex-wrap gap-2">
 
                     <!-- Previous -->
-                    <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                    <li class="page-item @(Model.searchDto.Page == 1 ? "disabled" : "")">
                         <a class="page-link"
                            asp-action="Index"
-                           asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = (Model.CurrentPage - 1).ToString() })">
+                           asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = (Model.searchDto.Page - 1).ToString() })">
                             <span>«</span>
                         </a>
                     </li>
 
                     @{
                         int offset = 3;
-                        int start = Math.Max(1, Model.CurrentPage - offset);
-                        int end = Math.Min(Model.TotalPages, Model.CurrentPage + offset);
+                        int start = Math.Max(1, Model.searchDto.Page - offset);
+                        int end = Math.Min(Model.TotalPages, Model.searchDto.Page + offset);
                         if (end - start + 1 < offset * 2 + 1)
                             start = Math.Max(1, end - offset * 2);
                     }
@@ -178,7 +165,7 @@
                     <!-- Page numbers -->
                     @for (int i = start; i <= end; i++)
                     {
-                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                        <li class="page-item @(i == Model.searchDto.Page ? "active" : "")">
                             <a class="page-link"
                                asp-action="Index"
                                asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = i.ToString() })">@i</a>
@@ -200,10 +187,10 @@
                     }
 
                     <!-- Next -->
-                    <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                    <li class="page-item @(Model.searchDto.Page == Model.TotalPages ? "disabled" : "")">
                         <a class="page-link"
                            asp-action="Index"
-                           asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = (Model.CurrentPage + 1).ToString() })">
+                           asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = (Model.searchDto.Page + 1).ToString() })">
                             <span>»</span>
                         </a>
                     </li>
@@ -212,7 +199,7 @@
                     <li class="page-item d-flex align-items-center ms-3">
                         <span class="text-muted small me-2">Go to</span>
                         <input type="number" id="pageInput" min="1" max="@Model.TotalPages"
-                               value="@Model.CurrentPage" class="form-control form-control-sm" style="width:70px;">
+                               value="@Model.searchDto.Page" class="form-control form-control-sm" style="width:70px;">
                         <button type="button" class="btn btn-outline-primary btn-sm ms-1" onclick="goToPage()">
                             Go
                         </button>
