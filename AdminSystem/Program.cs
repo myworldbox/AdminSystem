@@ -59,6 +59,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IInfoService, InfoService>();
+builder.Services.AddScoped<IContactService, ContactService>();
+builder.Services.AddScoped<IBankService, BankService>();
 
 builder.Services.AddAutoMapper(config => config.AddProfile<MappingHelper>());
 
