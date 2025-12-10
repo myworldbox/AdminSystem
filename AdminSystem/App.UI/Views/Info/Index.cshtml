@@ -1,10 +1,11 @@
 ﻿@using AdminSystem.Application.Dtos
 @using AdminSystem.Domain.Entities
 @using static AdminSystem.Domain.Enums
+
 @model PagedResultDto<客戶資料>
 
 @{
-    ViewData["Title"] = "Customer List";
+    ViewData["Title"] = "Info";
 
     // Current filter values
     var searchTerm = Context.Request.Query["searchTerm"].ToString();
@@ -224,25 +225,41 @@
 
 @section Scripts {
     <script>
-    function confirmDelete(id, name) {
-        if (confirm(`Are you sure you want to delete customer:\n${name}?\n\nThis action cannot be undone.`)) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '@Url.Action("Delete", "Info")/' + encodeURIComponent(id);
+        function confirmDelete(id, name) {
+            if (confirm(`Are you sure you want to delete customer:\n${name}?\n\nThis action cannot be undone.`)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '@Url.Action("Delete", "Info")/' + encodeURIComponent(id);
 
-            // CSRF token (if you use antiforgery)
-            const token = document.querySelector('input[name="__RequestVerificationToken"]');
-            if (token) {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = token.getAttribute('name');
-                input.value = token.value;
-                form.appendChild(input);
+                // CSRF token (if you use antiforgery)
+                const token = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (token) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = token.getAttribute('name');
+                    input.value = token.value;
+                    form.appendChild(input);
+                }
+
+                document.body.appendChild(form);
+                form.submit();
             }
-
-            document.body.appendChild(form);
-            form.submit();
         }
-    }
-</script>
+
+        function goToPage() {
+            const input = document.getElementById('pageInput');
+            let page = parseInt(input.value, 10);
+            if (isNaN(page) || page < 1) page = 1;
+            if (page > @Model.TotalPages) page = @Model.TotalPages;
+
+            const params = new URLSearchParams(window.location.search);
+            params.set('page', page);
+            window.location = '@Url.Action("Index", "Info")?' + params.toString();
+        }
+
+        // Press Enter in the input → go
+        document.getElementById('pageInput')?.addEventListener('keypress', e => {
+            if (e.key === 'Enter') goToPage();
+        });
+    </script>
 }

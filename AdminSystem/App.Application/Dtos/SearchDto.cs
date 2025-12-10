@@ -10,6 +10,6 @@ namespace AdminSystem.Application.Dtos
         string SearchTerm,
         Enums.Order Order,
         int Page,
-        int PageSize = 5
+        int PageSize = 10
     );
 }
