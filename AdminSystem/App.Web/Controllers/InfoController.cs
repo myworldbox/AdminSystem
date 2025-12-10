@@ -1,3 +1,4 @@
+using AdminSystem.Application.Dtos;
 using AdminSystem.Application.ViewModels;
 using AdminSystem.Domain;
 using AdminSystem.Domain.Entities;
@@ -6,6 +7,7 @@ using AutoMapper;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System.Linq.Dynamic.Core;
 using System.Text.Json;
@@ -14,59 +16,49 @@ namespace AdminSystem.Web.Controllers
 {
     public class InfoController(IUnitOfWork _unitOfWork, IMapper _mapper, IMemoryCache _cache) : Controller
     {
-        public IActionResult Index(string search = "", string sort = "Id", Enums.Order order = Enums.Order.asc, Enums.Category? category = null)
+        public async Task<IActionResult> Index(SearchDto searchDto)
         {
             // start with base query
             var query = _unitOfWork.Infos.Get();
 
-            if (!string.IsNullOrEmpty(search))
+            if (!string.IsNullOrEmpty(searchDto.SearchTerm))
             {
+                string SearchTerm = searchDto.SearchTerm.ToUpper();
                 query = query.Where(c =>
-                    c.客戶名稱.Contains(search) ||
-                    c.統一編號.Contains(search) ||
-                    c.電話.Contains(search) ||
-                    c.地址.Contains(search) ||
-                    c.Email.Contains(search));
+                    c.客戶名稱.Contains(SearchTerm) ||
+                    c.統一編號.Contains(SearchTerm) ||
+                    c.電話.Contains(SearchTerm) ||
+                    c.地址.Contains(SearchTerm) ||
+                    c.Email.Contains(SearchTerm));
             }
 
-            if (category != null)
+            // Sorting
+            query = searchDto.Order switch
             {
-                query = query.Where(c => c.客戶分類 == category.ToString());
-            }
+                Enums.Order.desc => query.OrderByDescending(s => s.Id),
+                Enums.Order.asc => query.OrderBy(s => s.Id),
+                _ => query.OrderBy(s => s.Id)
+            };
 
-            // dynamic sort (requires System.Linq.Dynamic.Core)
-            query = query.OrderBy($"{sort} {order}");
+            // Total count (important for pagination)
+            var totalRecords = await query.CountAsync();
 
-           var infos = query.ToList();
+            // Pagination
+            var items = await query
+                .Skip((searchDto.Page - 1) * searchDto.PageSize)
+                .Take(searchDto.PageSize)
+                .Select(s => s)
+                .ToListAsync();
 
-            var data = _mapper.Map<IEnumerable<InfoViewModel>>(infos);
-            var cacheKey = Guid.NewGuid().ToString();
-
-            _cache.Set(cacheKey, data, TimeSpan.FromMinutes(10));
-
-            if (ViewBag.CacheKey != null)
+            var vm = new PagedResultDto<客戶資料>
             {
-                _cache.Remove(ViewBag.CacheKey);
-            }
+                Items = items,
+                TotalRecords = totalRecords,
+                CurrentPage = searchDto.Page,
+                PageSize = searchDto.PageSize
+            };
 
-            ViewBag.Search = search;
-            ViewBag.Category = category;
-            ViewBag.Sort = sort;
-            ViewBag.Order = ((int)order + 1) % Enum.GetValues<Enums.Order>().Length;
-            ViewBag.Categories = new SelectList(
-                Enum.GetValues(typeof(Enums.Category)).Cast<Enums.Category>().Select(e => new
-                {
-                    Value = e,
-                    Text = e.ToString()
-                }),
-                "Value",
-                "Text",
-                category
-            );
-            ViewBag.CacheKey = cacheKey;
-            ViewData["Title"] = "Info";
-
-            return View(data);
+            return View(vm);
         }
 
         public IActionResult Details(int id)

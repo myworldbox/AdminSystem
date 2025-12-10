@@ -24,6 +24,5 @@ namespace AdminSystem.Application.ViewModels
         [RegularExpression(@"^\d{6,20}$", ErrorMessage = "帳戶號碼必須為 6-20 位數字")]
         public string 帳戶號碼 { get; set; }
         public bool 是否已刪除 { get; set; }
-        public virtual InfoViewModel? 客戶資料 { get; set; }
     }
 }

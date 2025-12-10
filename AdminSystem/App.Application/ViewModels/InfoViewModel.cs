@@ -7,12 +7,6 @@ namespace AdminSystem.Application.ViewModels
 {
     public record InfoViewModel
     {
-        public InfoViewModel()
-        {
-            客戶聯絡人 = new HashSet<ContactViewModel>();
-            客戶銀行資訊 = new HashSet<BankViewModel>();
-        }
-
         public int Id { get; set; }
         [Required(ErrorMessage = "必填")]
         [StringLength(50, ErrorMessage = "最多50字")]
@@ -33,8 +27,5 @@ namespace AdminSystem.Application.ViewModels
         public string? Email { get; set; }
         public Enums.Category? 客戶分類 { get; set; }
         public bool 是否已刪除 { get; set; }
-
-        public virtual ICollection<ContactViewModel> 客戶聯絡人 { get; set; }
-        public virtual ICollection<BankViewModel> 客戶銀行資訊 { get; set; }
     }
 }
