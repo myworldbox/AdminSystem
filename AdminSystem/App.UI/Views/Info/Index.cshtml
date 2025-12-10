@@ -6,26 +6,30 @@
 
 @{
     ViewData["Title"] = "Info";
-    int page = int.TryParse(Context.Request.Query["page"], out var p) ? p : 1;
-    page = page < 1 ? 1 : page;
+
+    var currentPage = Model.searchDto.Page;
+    var pageSize = Model.searchDto.PageSize;
+    var totalRecords = Model.TotalRecords;
+    var totalPages = Model.TotalPages;
+
+    var fromRecord = totalRecords == 0 ? 0 : (currentPage - 1) * pageSize + 1;
+    var toRecord = totalRecords == 0 ? 0 : Math.Min(currentPage * pageSize, totalRecords);
 
     var routeValues = new Dictionary<string, string>
     {
-        { "searchTerm", Model.searchDto.SearchTerm },
+        { "searchTerm", Model.searchDto.SearchTerm ?? "" },
         { "order", Model.searchDto.Order.ToString() }
     };
 }
 
 <div class="card shadow-sm">
     <h4 class="card-header fw-bold text-white" style="background-color: #337ab7;">
-        Info
+        Customer Information
     </h4>
-
     <div class="card-body">
         <!-- Search & Filters -->
         <form asp-action="Index" method="get" class="mb-4">
-            <div class="row g-3">
-                <!-- Search box -->
+            <div class="row g-3 align-items-end">
                 <div class="col-lg-6 col-md-8">
                     <label for="searchTerm" class="form-label">Search</label>
                     <input id="searchTerm" type="text" name="searchTerm"
@@ -33,32 +37,23 @@
                            class="form-control"
                            placeholder="Name, HKID, Phone, Email..." />
                 </div>
-
-                <!-- Buttons -->
-                <div class="col-lg-6 col-md-4 d-flex align-items-end justify-content-md-end">
-                    <div>
-                        <button type="submit" class="btn btn-primary">Search</button>
-                        <a asp-action="Index" class="btn btn-outline-secondary ms-2">Clear</a>
-                    </div>
+                <div class="col-lg-6 col-md-4 text-md-end">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary ms-2">Clear</a>
                 </div>
             </div>
-
             <input type="hidden" name="order" value="@Model.searchDto.Order" />
         </form>
 
-        <!-- Summary + Add Button -->
+        <!-- Summary + Create Button -->
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <small class="text-muted">
-                Showing
-                <strong>
-                    @(Model.Items.Any() ? ((Model.searchDto.Page - 1) * Model.searchDto.PageSize + 1) : 0)
-                    – @(Math.Min(Model.searchDto.Page * Model.searchDto.PageSize, Model.TotalRecords))
-                </strong>
-                of <strong>@Model.TotalRecords</strong> records
+                Showing <strong>@(fromRecord != toRecord ? $"{fromRecord} – {toRecord}" : fromRecord)</strong> of <strong>@totalRecords</strong> records
             </small>
             <a asp-action="Create" asp-controller="Info" class="btn btn-success btn-sm">
-                Create
+                <i class="fas fa-plus"></i> Create New
             </a>
+        </a>
         </div>
 
         <!-- Table -->
@@ -66,27 +61,13 @@
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>
-                            @Html.ActionLink("客戶名稱", "Index", new { sort = "客戶名稱", order = ViewBag.Order, search = ViewBag.Search, category = ViewBag.Category }, new { @class = "sortable" })
-                        </th>
-                        <th>
-                            @Html.ActionLink("統一編號", "Index", new { sort = "統一編號", order = ViewBag.Order, search = ViewBag.Search, category = ViewBag.Category }, new { @class = "sortable" })
-                        </th>
-                        <th>
-                            @Html.ActionLink("電話", "Index", new { sort = "電話", order = ViewBag.Order, search = ViewBag.Search, category = ViewBag.Category }, new { @class = "sortable" })
-                        </th>
-                        <th>
-                            @Html.ActionLink("傳真", "Index", new { sort = "傳真", order = ViewBag.Order, search = ViewBag.Search, category = ViewBag.Category }, new { @class = "sortable" })
-                        </th>
-                        <th>
-                            @Html.ActionLink("地址", "Index", new { sort = "地址", order = ViewBag.Order, search = ViewBag.Search, category = ViewBag.Category }, new { @class = "sortable" })
-                        </th>
-                        <th>
-                            @Html.ActionLink("Email", "Index", new { sort = "Email", order = ViewBag.Order, search = ViewBag.Search, category = ViewBag.Category }, new { @class = "sortable" })
-                        </th>
-                        <th>
-                            @Html.ActionLink("客戶分類", "Index", new { sort = "客戶分類", order = ViewBag.Order, search = ViewBag.Search, category = ViewBag.Category }, new { @class = "sortable" })
-                        </th>
+                        <th>@Html.ActionLink("Customer Name", "Index", new { sort = "客戶名稱", order = ViewBag.Order, search = ViewBag.Search }, new { @class = "sortable" })</th>
+                        <th>@Html.ActionLink("統一編號", "Index", new { sort = "統一編號", order = ViewBag.Order, search = ViewBag.Search }, new { @class = "sortable" })</th>
+                        <th>@Html.ActionLink("Phone", "Index", new { sort = "電話", order = ViewBag.Order, search = ViewBag.Search }, new { @class = "sortable" })</th>
+                        <th>@Html.ActionLink("Fax", "Index", new { sort = "傳真", order = ViewBag.Order, search = ViewBag.Search }, new { @class = "sortable" })</th>
+                        <th>@Html.ActionLink("Address", "Index", new { sort = "地址", order = ViewBag.Order, search = ViewBag.Search }, new { @class = "sortable" })</th>
+                        <th>@Html.ActionLink("Email", "Index", new { sort = "Email", order = ViewBag.Order, search = ViewBag.Search }, new { @class = "sortable" })</th>
+                        <th>@Html.ActionLink("Category", "Index", new { sort = "客戶分類", order = ViewBag.Order, search = ViewBag.Search }, new { @class = "sortable" })</th>
                         <th class="text-center">Actions</th>
                     </tr>
                 </thead>
@@ -104,13 +85,17 @@
                                 <td>@item.Email</td>
                                 <td>@item.客戶分類</td>
                                 <td class="text-center">
-                                    <a asp-action="Details" asp-controller="Info" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark" title="Details">
+                                    <a asp-action="Details" asp-controller="Info" asp-route-id="@item.Id"
+                                       class="btn btn-sm btn-outline-dark" title="Details">
                                         Details
                                     </a>
-                                    <a asp-action="Edit" asp-controller="Info" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" title="Edit">
+                                    <a asp-action="Edit" asp-controller="Info" asp-route-id="@item.Id"
+                                       class="btn btn-sm btn-outline-primary" title="Edit">
                                         Edit
                                     </a>
-                                    <a asp-action="Delete" asp-controller="Info" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" title="Delete">
+                                    <a asp-action="Delete" asp-controller="Info" asp-route-id="@item.Id"
+                                       class="btn btn-sm btn-outline-danger" title="Delete"
+                                       onclick="return confirm('Are you sure you want to delete customer:\n@item.客戶名稱?\n\nThis action cannot be undone.');">
                                         Delete
                                     </a>
                                 </td>
@@ -120,7 +105,9 @@
                     else
                     {
                         <tr>
-                            <td colspan="8" class="text-center py-5 text-muted">No customer records found.</td>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                No customer records found.
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -128,78 +115,75 @@
         </div>
 
         <!-- Pagination -->
-        @if (Model.TotalPages > 1)
+        @if (totalPages > 1)
         {
             <nav aria-label="Page navigation" class="mt-4">
                 <ul class="pagination justify-content-center flex-wrap gap-2">
-
                     <!-- Previous -->
-                    <li class="page-item @(Model.searchDto.Page == 1 ? "disabled" : "")">
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
                         <a class="page-link"
                            asp-action="Index"
-                           asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = (Model.searchDto.Page - 1).ToString() })">
-                            <span>«</span>
-                        </a>
+                           asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = (currentPage - 1).ToString() })"
+                           tabindex="-1">«</a>
                     </li>
 
+                    <!-- Page Numbers (simple: show up to 10 pages centered around current) -->
                     @{
-                        int offset = 3;
-                        int start = Math.Max(1, Model.searchDto.Page - offset);
-                        int end = Math.Min(Model.TotalPages, Model.searchDto.Page + offset);
-                        if (end - start + 1 < offset * 2 + 1)
-                            start = Math.Max(1, end - offset * 2);
+                        int pagerStart = Math.Max(1, currentPage - 5);
+                        int pagerEnd = Math.Min(totalPages, currentPage + 4);
+
+                        if (pagerEnd - pagerStart + 1 < 10)
+                        {
+                            if (currentPage < totalPages / 2)
+                                pagerEnd = Math.Min(totalPages, pagerStart + 9);
+                            else
+                                pagerStart = Math.Max(1, pagerEnd - 9);
+                        }
                     }
 
-                    <!-- First page + ellipsis -->
-                    @if (start > 1)
+                    @if (pagerStart > 1)
                     {
-                        <li class="page-item">
-                            <a class="page-link" asp-action="Index" asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = "1" })">1</a>
-                        </li>
-                        @if (start > 2)
+                        <li class="page-item"><a class="page-link" asp-action="Index" asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = "1" })">1</a></li>
+                        if (pagerStart > 2)
                         {
                             <li class="page-item disabled"><span class="page-link">…</span></li>
                         }
                     }
 
-                    <!-- Page numbers -->
-                    @for (int i = start; i <= end; i++)
+                    @for (int i = pagerStart; i <= pagerEnd; i++)
                     {
-                        <li class="page-item @(i == Model.searchDto.Page ? "active" : "")">
+                        <li class="page-item @(i == currentPage ? "active" : "")">
                             <a class="page-link"
                                asp-action="Index"
                                asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = i.ToString() })">@i</a>
                         </li>
                     }
 
-                    <!-- Ellipsis + Last page -->
-                    @if (end < Model.TotalPages)
+                    @if (pagerEnd < totalPages)
                     {
-                        @if (end < Model.TotalPages - 1)
+                        if (pagerEnd < totalPages - 1)
                         {
                             <li class="page-item disabled"><span class="page-link">…</span></li>
                         }
                         <li class="page-item">
                             <a class="page-link"
                                asp-action="Index"
-                               asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = Model.TotalPages.ToString() })">@Model.TotalPages</a>
+                               asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = totalPages.ToString() })">@totalPages</a>
                         </li>
                     }
 
                     <!-- Next -->
-                    <li class="page-item @(Model.searchDto.Page == Model.TotalPages ? "disabled" : "")">
+                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
                         <a class="page-link"
                            asp-action="Index"
-                           asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = (Model.searchDto.Page + 1).ToString() })">
-                            <span>»</span>
-                        </a>
+                           asp-all-route-data="@(new Dictionary<string, string>(routeValues) { ["page"] = (currentPage + 1).ToString() })">»</a>
                     </li>
 
-                    <!-- Go to page input -->
+                    <!-- Go to page -->
                     <li class="page-item d-flex align-items-center ms-3">
                         <span class="text-muted small me-2">Go to</span>
-                        <input type="number" id="pageInput" min="1" max="@Model.TotalPages"
-                               value="@Model.searchDto.Page" class="form-control form-control-sm" style="width:70px;">
+                        <input type="number" id="pageInput" min="1" max="@totalPages"
+                               value="@currentPage" class="form-control form-control-sm" style="width:70px;">
                         <button type="button" class="btn btn-outline-primary btn-sm ms-1" onclick="goToPage()">
                             Go
                         </button>
