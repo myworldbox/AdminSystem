@@ -2,7 +2,7 @@ using AdminSystem.Domain;
 using AdminSystem.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using static AdminSystem.Domain.Enums;
+using Database = AdminSystem.Domain.Enums.Database;
 
 namespace AdminSystem.Infrastructure.Data
 {
@@ -30,8 +30,8 @@ namespace AdminSystem.Infrastructure.Data
                 .AddJsonFile("appsettings.json")
                 .Build();
 
-            string connectionString = config["AppDbContext"];
-            Database db = (Database)Enum.Parse(typeof(Database), connectionString, ignoreCase: true);
+            var provider = config["AppDbContext"];
+            Database db = (Database)Enum.Parse(typeof(Database), provider, ignoreCase: true);
 
             switch (db)
             {
