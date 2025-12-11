@@ -1,3 +1,4 @@
+using AdminSystem.App.Infrastructure.Data;
 using AdminSystem.Application.Helpers;
 using AdminSystem.Application.Services;
 using AdminSystem.Application.ViewModels;
@@ -56,6 +57,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     }
 });
 
+builder.Services.AddScoped<MockDataSeed>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IInfoService, InfoService>();
@@ -65,6 +67,12 @@ builder.Services.AddScoped<IBankService, BankService>();
 builder.Services.AddAutoMapper(config => config.AddProfile<MappingHelper>());
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<MockDataSeed>();
+    await seeder.SeedAsync();
+}
 
 var defaultCulture = new CultureInfo("zh-CN"); // ©Î "zh-TW"
 var localizationOptions = new RequestLocalizationOptions
