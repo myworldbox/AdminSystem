@@ -6,7 +6,7 @@ namespace AdminSystem.Application.Services;
 
 public interface IContactService
 {
-    Task<PagedResultDto<客戶聯絡人>> GetPagedAsync(SearchDto searchDto);
+    Task<PagedResultDto<ContactViewModel>> GetPagedAsync(SearchDto searchDto);
     Task<ContactViewModel?> GetByIdAsync(int id);
     Task<ContactViewModel> GetForCreateAsync();
     Task<ContactViewModel> GetForEditAsync(int id);

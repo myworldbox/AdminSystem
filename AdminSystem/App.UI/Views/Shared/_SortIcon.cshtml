@@ -1,0 +1,4 @@
+﻿@{
+    var order = Context.GetRouteValue("Order")?.ToString() ?? "asc";
+}
+<i class="fas fa-sort-@(order == "asc" ? "up" : "down") ms-1"></i>

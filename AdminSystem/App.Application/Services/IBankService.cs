@@ -6,7 +6,7 @@ namespace AdminSystem.Application.Services;
 
 public interface IBankService
 {
-    Task<PagedResultDto<客戶銀行資訊>> GetPagedAsync(SearchDto searchDto);
+    Task<PagedResultDto<BankViewModel>> GetPagedAsync(SearchDto searchDto);
     Task<BankViewModel?> GetByIdAsync(int id);
     Task<BankViewModel> GetForCreateAsync();
     Task<BankViewModel> GetForEditAsync(int id);

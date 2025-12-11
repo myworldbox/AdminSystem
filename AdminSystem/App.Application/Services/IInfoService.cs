@@ -6,7 +6,7 @@ namespace AdminSystem.Application.Services;
 
 public interface IInfoService
 {
-    Task<PagedResultDto<客戶資料>> GetPagedAsync(SearchDto searchDto);
+    Task<PagedResultDto<InfoViewModel>> GetPagedAsync(SearchDto searchDto);
     Task<InfoViewModel?> GetByIdAsync(int id);
     Task<InfoViewModel> GetForCreateAsync();
     Task<InfoViewModel> GetForEditAsync(int id);

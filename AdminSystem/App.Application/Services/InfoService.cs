@@ -44,7 +44,7 @@ public class InfoService : IInfoService
         return query;
     }
 
-    public async Task<PagedResultDto<客戶資料>> GetPagedAsync(SearchDto searchDto)
+    public async Task<PagedResultDto<InfoViewModel>> GetPagedAsync(SearchDto searchDto)
     {
         var query = GetBaseQuery(searchDto);
 
@@ -55,9 +55,11 @@ public class InfoService : IInfoService
             .Take(searchDto.PageSize)
             .ToListAsync();
 
-        return new PagedResultDto<客戶資料>
+        var data = _mapper.Map<List<InfoViewModel>>(items);
+
+        return new PagedResultDto<InfoViewModel>
         {
-            Items = items,
+            Items = data,
             TotalRecords = total,
             SearchDto = searchDto
         };

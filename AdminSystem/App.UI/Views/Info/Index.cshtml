@@ -1,152 +1,115 @@
 ﻿@using AdminSystem.Application.Dtos
 @using AdminSystem.Domain.Entities
 @using static AdminSystem.Domain.Enums
+@using System.ComponentModel
+@using AutoMapper.Configuration.Annotations
 
-@model PagedResultDto<客戶資料>
+@model PagedResultDto<InfoViewModel>
 
 @{
     ViewData["Title"] = "客戶資料管理";
+    var search = Model.SearchDto;
+    var nextOrder = (search.Order == Order.asc ? Order.desc : Order.asc).ToString();
 
-    var currentPage = Model.SearchDto.Page;
-    var pageSize = Model.SearchDto.PageSize;
-    var totalRecords = Model.TotalRecords;
-    var totalPages = Model.TotalPages;
-
-    var fromRecord = totalRecords == 0 ? 0 : (currentPage - 1) * pageSize + 1;
-    var toRecord = totalRecords == 0 ? 0 : Math.Min(currentPage * pageSize, totalRecords);
-
-    // 排序方向切換
-    Order nextOrder = Model.SearchDto.Order == Order.asc ? Order.desc : Order.asc;
-
-    // 基礎路由參數（用於排序連結）
-    var baseRoute = new Dictionary<string, string>
+    // Sorting link builder
+    dynamic SortLink(string column) => new Dictionary<string, string>
     {
-        { "SearchTerm", Model.SearchDto.SearchTerm ?? "" },
-        { "OrderName", "" },
-        { "Order", nextOrder.ToString() },
-        { "Page", "1" }
+        ["SearchTerm"] = search.SearchTerm ?? "",
+        ["OrderName"] = column,
+        ["Order"] = nextOrder,
+        ["Page"] = "1"
     };
+
+    // Get all properties of 客戶資料
+    var props = typeof(InfoViewModel)
+    .GetProperties()
+    .Where(p => !Attribute.IsDefined(p, typeof(IgnoreAttribute)))
+    .ToArray();
 }
 
 <div class="card shadow-sm mb-5">
-    <h4 class="card-header fw-bold text-white" style="background-color: #337ab7;">
-        客戶資料管理
-    </h4>
+    <h4 class="card-header fw-bold text-white" style="background: #337ab7;">客戶資料管理</h4>
     <div class="card-body">
 
-        <!-- 搜尋表單 -->
+        <!-- Search Form -->
         <form asp-action="Index" method="get" class="mb-4">
             <div class="row g-3 align-items-end">
-                <div class="col-lg-6 col-md-8">
+                <div class="col-lg-8 col-md-7">
                     <label class="form-label">搜尋關鍵字</label>
-                    <input type="text" name="SearchTerm" value="@Model.SearchDto.SearchTerm"
-                           class="form-control" placeholder="客戶名稱、統一編號、電話、地址、Email..." />
+                    <input name="SearchTerm" value="@search.SearchTerm" class="form-control"
+                           placeholder="客戶名稱、統一編號、電話、地址、Email..." />
                 </div>
-                <div class="col-lg-6 col-md-4 text-md-end">
+                <div class="col-lg-4 col-md-5 text-md-end">
                     <button type="submit" class="btn btn-primary">搜尋</button>
                     <a asp-action="Index" class="btn btn-outline-secondary ms-2">清除</a>
-                    <a asp-action="Create" class="btn btn-success ms-2">
-                        新增客戶
-                    </a>
+                    <a asp-action="Create" class="btn btn-success ms-2">新增客戶</a>
                 </div>
             </div>
-            <input type="hidden" name="OrderName" value="@Model.SearchDto.OrderName" />
-            <input type="hidden" name="Order" value="@Model.SearchDto.Order" />
+            <input type="hidden" name="OrderName" value="@search.OrderName" />
+            <input type="hidden" name="Order" value="@search.Order" />
         </form>
 
-        <!-- 匯出 Excel（不再用 cacheKey） -->
-        <form asp-action="Export" method="get" class="d-inline mb-3">
-            @foreach (var key in Context.Request.Query.Keys)
-            {
-                @foreach (var value in Context.Request.Query[key])
-                {
-                    <input type="hidden" name="@key" value="@value" />
-                }
-            }
-            <button type="submit" class="btn btn-success">
-                匯出 Excel
-            </button>
-        </form>
+        <!-- Export + Stats -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+            <div>
+                <form asp-action="Export" method="get" class="d-inline">
+                    @foreach (var key in Context.Request.Query.Keys)
+                    {
+                        foreach (var val in Context.Request.Query[key])
+                        {
+                            <input type="hidden" name="@key" value="@val" />
+                        }
+                    }
+                    <button type="submit" class="btn btn-success btn-sm">匯出 Excel</button>
+                </form>
+            </div>
 
-        <!-- 資料統計 -->
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <small class="text-muted">
-                顯示 <strong>@(fromRecord != toRecord ? $"{fromRecord} – {toRecord}" : fromRecord)</strong> 
-                筆，共 <strong>@totalRecords</strong> 筆記錄
+                顯示 <strong>
+                    @(Model.TotalRecords == 0 ? 0 : (search.Page - 1) * search.PageSize + 1)
+                    – @(Math.Min(search.Page * search.PageSize, Model.TotalRecords))
+                </strong> 筆，
+                共 <strong>@Model.TotalRecords</strong> 筆記錄
             </small>
         </div>
 
-        <!-- 表格 -->
+        <!-- Responsive Table -->
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>
-                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "客戶名稱" })">
-                                客戶名稱
-                                @if (Model.SearchDto.OrderName == "客戶名稱")
-                                {
-                                    <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i>
-                                }
-                            </a>
-                        </th>
-                        <th>
-                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "統一編號" })">
-                                統一編號
-                                @if (Model.SearchDto.OrderName == "統一編號") { <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i> }
-                            </a>
-                        </th>
-                        <th>
-                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "電話" })">
-                                電話
-                                @if (Model.SearchDto.OrderName == "電話") { <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i> }
-                            </a>
-                        </th>
-                        <th>
-                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "傳真" })">
-                                傳真
-                                @if (Model.SearchDto.OrderName == "傳真") { <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i> }
-                            </a>
-                        </th>
-                        <th>
-                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "地址" })">
-                                地址
-                                @if (Model.SearchDto.OrderName == "地址") { <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i> }
-                            </a>
-                        </th>
-                        <th>
-                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "Email" })">
-                                Email
-                                @if (Model.SearchDto.OrderName == "Email") { <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i> }
-                            </a>
-                        </th>
-                        <th>
-                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "客戶分類" })">
-                                客戶分類
-                                @if (Model.SearchDto.OrderName == "客戶分類") { <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i> }
-                            </a>
-                        </th>
+                        @foreach (var prop in props)
+                        {
+                            var displayName = prop.GetCustomAttributes(typeof(DisplayNameAttribute), false)
+                            .Cast<DisplayNameAttribute>()
+                            .FirstOrDefault()?.DisplayName ?? prop.Name;
+
+                            <th>
+                                <a asp-all-route-data="@SortLink(prop.Name)">
+                                    @displayName
+                                    @(search.OrderName == prop.Name ? Html.PartialAsync("_SortIcon").Result : null)
+                                </a>
+                            </th>
+                        }
                         <th class="text-center">操作</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (Model.Items.Any())
                     {
-                        foreach (var item in Model.Items)
+                        @foreach (var item in Model.Items)
                         {
                             <tr>
-                                <td>@item.客戶名稱</td>
-                                <td>@item.統一編號</td>
-                                <td>@item.電話</td>
-                                <td>@item.傳真</td>
-                                <td>@item.地址</td>
-                                <td>@item.Email</td>
-                                <td>@item.客戶分類</td>
-                                <td class="text-center">
+                                @foreach (var prop in props)
+                                {
+                                    var value = prop.GetValue(item);
+                                    <td>@value</td>
+                                }
+                                <td class="text-center text-nowrap">
                                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark">詳細</a>
                                     <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">編輯</a>
                                     <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger"
-                                       onclick="return confirm('確定要刪除客戶「@item.客戶名稱」嗎？\n\n此動作無法復原。');">刪除</a>
+                                       onclick="return confirm('確定要刪除「@item.客戶名稱」嗎？\n此動作無法復原。')">刪除</a>
                                 </td>
                             </tr>
                         }
@@ -154,14 +117,14 @@
                     else
                     {
                         <tr>
-                            <td colspan="8" class="text-center py-5 text-muted">尚未有任何客戶資料</td>
+                            <td colspan="@(props.Length + 1)" class="text-center py-5 text-muted">尚未有任何客戶資料</td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
 
+        <!-- Pagination -->
         @await Html.PartialAsync("_Pagination", Model)
-
     </div>
 </div>

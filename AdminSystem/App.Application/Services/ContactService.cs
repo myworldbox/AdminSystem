@@ -46,7 +46,7 @@ public class ContactService : IContactService
         return query;
     }
 
-    public async Task<PagedResultDto<客戶聯絡人>> GetPagedAsync(SearchDto searchDto)
+    public async Task<PagedResultDto<ContactViewModel>> GetPagedAsync(SearchDto searchDto)
     {
         var query = GetBaseQuery(searchDto);
         var total = await query.CountAsync();
@@ -56,9 +56,11 @@ public class ContactService : IContactService
             .Take(searchDto.PageSize)
             .ToListAsync();
 
-        return new PagedResultDto<客戶聯絡人>
+        var data = _mapper.Map<List<ContactViewModel>>(items);
+
+        return new PagedResultDto<ContactViewModel>
         {
-            Items = items,
+            Items = data,
             TotalRecords = total,
             SearchDto = searchDto
         };

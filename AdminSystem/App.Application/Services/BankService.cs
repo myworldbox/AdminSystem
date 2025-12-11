@@ -46,7 +46,7 @@ public class BankService : IBankService
         return query;
     }
 
-    public async Task<PagedResultDto<客戶銀行資訊>> GetPagedAsync(SearchDto searchDto)
+    public async Task<PagedResultDto<BankViewModel>> GetPagedAsync(SearchDto searchDto)
     {
         var query = GetBaseQuery(searchDto);
         var total = await query.CountAsync();
@@ -56,9 +56,11 @@ public class BankService : IBankService
             .Take(searchDto.PageSize)
             .ToListAsync();
 
-        return new PagedResultDto<客戶銀行資訊>
+        var data = _mapper.Map<List<BankViewModel>>(items);
+;
+        return new PagedResultDto<BankViewModel>
         {
-            Items = items,
+            Items = data,
             TotalRecords = total,
             SearchDto = searchDto
         };
