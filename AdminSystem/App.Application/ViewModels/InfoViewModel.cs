@@ -28,8 +28,8 @@ namespace AdminSystem.Application.ViewModels
         [EmailAddress(ErrorMessage = "無效格式")]
         public string? Email { get; set; }
         public Enums.Category? 客戶分類 { get; set; }
+        [Ignore]
         public bool 是否已刪除 { get; set; }
-
         [Ignore]
         public InfoDropdown? dropdown { get; set; }
     }

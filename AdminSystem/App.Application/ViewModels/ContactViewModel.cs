@@ -25,6 +25,7 @@ namespace AdminSystem.Application.ViewModels
         public string? 手機 { get; set; }
         [PhoneFormat]
         public string? 電話 { get; set; }
+        [Ignore]
         public bool 是否已刪除 { get; set; }
 
         [Ignore]

@@ -18,6 +18,9 @@ public class ContactController : Controller
     public async Task<IActionResult> Index(SearchDto searchDto)
     {
         var result = await _contactService.GetPagedAsync(searchDto);
+
+        ViewData["Title"] = "客戶聯絡人管理";
+
         return View(result);
     }
 

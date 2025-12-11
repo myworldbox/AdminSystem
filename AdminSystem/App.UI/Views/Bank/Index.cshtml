@@ -1,145 +1,111 @@
-﻿@using AdminSystem.Application.ViewModels
-@using System.Text.Json
+﻿@using AdminSystem.Application.Dtos
 @using AdminSystem.Domain.Entities
-@using AdminSystem.Application.Dtos
 @using static AdminSystem.Domain.Enums
+@using System.ComponentModel
+@using AutoMapper.Configuration.Annotations
+
 @model PagedResultDto<BankViewModel>
 
 @{
-    ViewData["Title"] = "客戶銀行帳戶管理";
+    var search = Model.SearchDto;
+    var nextOrder = (search.Order == Order.asc ? Order.desc : Order.asc).ToString();
 
-    var currentPage = Model.SearchDto.Page;
-    var pageSize = Model.SearchDto.PageSize;
-    var totalRecords = Model.TotalRecords;
-    var totalPages = Model.TotalPages;
-
-    var fromRecord = totalRecords == 0 ? 0 : (currentPage - 1) * pageSize + 1;
-    var toRecord = totalRecords == 0 ? 0 : Math.Min(currentPage * pageSize, totalRecords);
-
-    Order nextOrder = Model.SearchDto.Order == Order.asc ? Order.desc : Order.asc;
-
-    var baseRoute = new Dictionary<string, string>
+    dynamic SortLink(string column) => new Dictionary<string, string>
     {
-        { "SearchTerm", Model.SearchDto.SearchTerm ?? "" },
-        { "OrderName", "" },
-        { "Order", nextOrder.ToString() },
-        { "Page", "1" }
+        ["SearchTerm"] = search.SearchTerm ?? "",
+        ["OrderName"] = column,
+        ["Order"] = nextOrder,
+        ["Page"] = "1"
     };
+
+    var props = typeof(BankViewModel)
+    .GetProperties()
+    .Where(p => !Attribute.IsDefined(p, typeof(IgnoreAttribute)))
+    .ToArray();
 }
 
 <div class="card shadow-sm mb-5">
-    <h4 class="card-header fw-bold text-white" style="background-color: #337ab7;">
-        客戶銀行帳戶管理
-    </h4>
+    <h4 class="card-header fw-bold text-white" style="background: #337ab7;">@ViewData["Title"]</h4>
     <div class="card-body">
 
+        <!-- Search Form -->
         <form asp-action="Index" method="get" class="mb-4">
             <div class="row g-3 align-items-end">
-                <div class="col-lg-6 col-md-8">
+                <div class="col-lg-8 col-md-7">
                     <label class="form-label">搜尋關鍵字</label>
-                    <input type="text" name="SearchTerm" value="@Model.SearchDto.SearchTerm"
-                           class="form-control" placeholder="銀行名稱、代碼、帳戶名稱、帳號..." />
+                    <input name="SearchTerm" value="@search.SearchTerm" class="form-control" />
                 </div>
-                <div class="col-lg-6 col-md-4 text-md-end">
+                <div class="col-lg-4 col-md-5 text-md-end">
                     <button type="submit" class="btn btn-primary">搜尋</button>
                     <a asp-action="Index" class="btn btn-outline-secondary ms-2">清除</a>
-                    <a asp-action="Create" class="btn btn-success ms-2">
-                        新增銀行帳戶
-                    </a>
+                    <a asp-action="Create" class="btn btn-success ms-2">新增客戶</a>
                 </div>
             </div>
-            <input type="hidden" name="OrderName" value="@Model.SearchDto.OrderName" />
-            <input type="hidden" name="Order" value="@Model.SearchDto.Order" />
+            <input type="hidden" name="OrderName" value="@search.OrderName" />
+            <input type="hidden" name="Order" value="@search.Order" />
         </form>
 
-        <form asp-action="Export" asp-controller="Bank" method="get" class="d-inline mb-3">
-            @foreach (var key in Context.Request.Query.Keys)
-            {
-                @foreach (var val in Context.Request.Query[key])
-                {
-                    <input type="hidden" name="@key" value="@val" />
-                }
-            }
-            <button type="submit" class="btn btn-success">
-                匯出 Excel
-            </button>
-        </form>
+        <!-- Export + Stats -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+            <div>
+                <form asp-action="Export" method="get" class="d-inline">
+                    @foreach (var key in Context.Request.Query.Keys)
+                    {
+                        foreach (var val in Context.Request.Query[key])
+                        {
+                            <input type="hidden" name="@key" value="@val" />
+                        }
+                    }
+                    <button type="submit" class="btn btn-success btn-sm">匯出 Excel</button>
+                </form>
+            </div>
 
-        <div class="d-flex justify-content-between align-items-center mb-3">
             <small class="text-muted">
-                顯示 <strong>@(fromRecord != toRecord ? $"{fromRecord} – {toRecord}" : fromRecord)</strong>
-                筆，共 <strong>@totalRecords</strong> 筆
+                顯示 <strong>
+                    @(Model.TotalRecords == 0 ? 0 : (search.Page - 1) * search.PageSize + 1)
+                    – @(Math.Min(search.Page * search.PageSize, Model.TotalRecords))
+                </strong> 筆，
+                共 <strong>@Model.TotalRecords</strong> 筆記錄
             </small>
         </div>
 
+        <!-- Responsive Table -->
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>
-                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "銀行名稱" })">
-                                銀行名稱
-                                @if (Model.SearchDto.OrderName == "銀行名稱")
-                                {
-                                    <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i>
-                                }
-                            </a>
-                        </th>
-                        <th>
-                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "銀行代碼" })">
-                                銀行代碼
-                                @if (Model.SearchDto.OrderName == "銀行代碼")
-                                {
-                                    <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i>
-                                }
-                            </a>
-                        </th>
-                        <th>
-                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "分行代碼" })">
-                                分行代碼
-                                @if (Model.SearchDto.OrderName == "分行代碼")
-                                {
-                                    <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i>
-                                }
-                            </a>
-                        </th>
-                        <th>
-                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "帳戶名稱" })">
-                                帳戶名稱
-                                @if (Model.SearchDto.OrderName == "帳戶名稱")
-                                {
-                                    <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i>
-                                }
-                            </a>
-                        </th>
-                        <th>
-                            <a asp-all-route-data="@(new Dictionary<string, string>(baseRoute) { ["OrderName"] = "帳戶號碼" })">
-                                帳戶號碼
-                                @if (Model.SearchDto.OrderName == "帳戶號碼")
-                                {
-                                    <i class="fas fa-sort-@(Model.SearchDto.Order == Order.asc ? "up" : "down")"></i>
-                                }
-                            </a>
-                        </th>
+                        @foreach (var prop in props)
+                        {
+                            var displayName = prop.GetCustomAttributes(typeof(DisplayNameAttribute), false)
+                            .Cast<DisplayNameAttribute>()
+                            .FirstOrDefault()?.DisplayName ?? prop.Name;
+
+                            <th>
+                                <a asp-all-route-data="@SortLink(prop.Name)">
+                                    @displayName
+                                    @(search.OrderName == prop.Name ? Html.PartialAsync("_SortIcon").Result : null)
+                                </a>
+                            </th>
+                        }
                         <th class="text-center">操作</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (Model.Items.Any())
                     {
-                        foreach (var item in Model.Items)
+                        @foreach (var item in Model.Items)
                         {
                             <tr>
-                                <td>@item.銀行名稱</td>
-                                <td>@item.銀行代碼</td>
-                                <td>@item.分行代碼</td>
-                                <td>@item.帳戶名稱</td>
-                                <td>@item.帳戶號碼</td>
-                                <td class="text-center">
+                                @foreach (var prop in props)
+                                {
+                                    var value = prop.GetValue(item);
+                                    <td>@value</td>
+                                }
+                                <td class="text-center text-nowrap">
                                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark">詳細</a>
                                     <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">編輯</a>
                                     <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger"
-                                       onclick="return confirm('確定要刪除此銀行帳戶嗎？');">刪除</a>
+                                       onclick="return confirm('確定要刪除「@item.Id」嗎？\n此動作無法復原。')">刪除</a>
                                 </td>
                             </tr>
                         }
@@ -147,14 +113,14 @@
                     else
                     {
                         <tr>
-                            <td colspan="6" class="text-center py-5 text-muted">尚未有任何銀行帳戶資料</td>
+                            <td colspan="@(props.Length + 1)" class="text-center py-5 text-muted">尚未有任何客戶資料</td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
 
+        <!-- Pagination -->
         @await Html.PartialAsync("_Pagination", Model)
-
     </div>
 </div>

@@ -17,6 +17,9 @@ public class BankController : Controller
     public async Task<IActionResult> Index(SearchDto searchDto)
     {
         var result = await _bankService.GetPagedAsync(searchDto);
+
+        ViewData["Title"] = "客戶銀行帳戶管理";
+
         return View(result);
     }
 

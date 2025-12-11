@@ -18,6 +18,9 @@ public class InfoController : Controller
     public async Task<IActionResult> Index(SearchDto searchDto)
     {
         var result = await _infoService.GetPagedAsync(searchDto);
+
+        ViewData["Title"] = "客戶資料管理";
+
         return View(result);
     }
 

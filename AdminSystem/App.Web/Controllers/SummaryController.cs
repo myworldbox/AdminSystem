@@ -12,9 +12,9 @@ namespace AdminSystem.Web.Controllers
         {
             var summaries = await _summaryService.GetSummaryAsync();
 
-            ViewData["Title"] = "Summary";
-
             var data = _mapper.Map<IEnumerable<SummaryViewModel>>(summaries);
+
+            ViewData["Title"] = "Summary";
 
             return View(data);
         }
