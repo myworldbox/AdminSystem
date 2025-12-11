@@ -63,6 +63,7 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IInfoService, InfoService>();
 builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddScoped<IBankService, BankService>();
+builder.Services.AddScoped<ISummaryService, SummaryService>();
 
 builder.Services.AddAutoMapper(config => config.AddProfile<MappingHelper>());
 

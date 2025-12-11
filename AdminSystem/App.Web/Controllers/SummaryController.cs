@@ -1,15 +1,16 @@
-﻿using AdminSystem.Application.ViewModels;
+﻿using AdminSystem.Application.Services;
+using AdminSystem.Application.ViewModels;
 using AdminSystem.Infrastructure.Data;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AdminSystem.Web.Controllers
 {
-    public class SummaryController(AppDbContext _context, IMapper _mapper) : Controller
+    public class SummaryController(ISummaryService _summaryService, IMapper _mapper) : Controller
     {
-        public IActionResult Index()
+        public async Task<IActionResult> IndexAsync()
         {
-            var summaries = _context.vw_CustomerSummary.ToList();
+            var summaries = await _summaryService.GetSummaryAsync();
 
             ViewData["Title"] = "Summary";
 

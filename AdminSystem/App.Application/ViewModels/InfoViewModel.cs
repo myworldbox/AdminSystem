@@ -1,5 +1,6 @@
 using AdminSystem.Application.Validators;
 using AdminSystem.Domain;
+using AutoMapper.Configuration.Annotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -29,7 +30,8 @@ namespace AdminSystem.Application.ViewModels
         public Enums.Category? 客戶分類 { get; set; }
         public bool 是否已刪除 { get; set; }
 
-        public InfoDropdown dropdown { get; set; }
+        [Ignore]
+        public InfoDropdown? dropdown { get; set; }
     }
 
     public record InfoDropdown
