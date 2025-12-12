@@ -37,10 +37,10 @@ public class ContactService : IContactService
 
         query = searchDto.OrderName switch
         {
-            "姓名" => searchDto.Order == Enums.Order.desc ? query.OrderByDescending(x => x.姓名) : query.OrderBy(x => x.姓名),
-            "Email" => searchDto.Order == Enums.Order.desc ? query.OrderByDescending(x => x.Email) : query.OrderBy(x => x.Email),
-            "職稱" => searchDto.Order == Enums.Order.desc ? query.OrderByDescending(x => x.職稱) : query.OrderBy(x => x.職稱),
-            _ => searchDto.Order == Enums.Order.desc ? query.OrderByDescending(x => x.Id) : query.OrderBy(x => x.Id)
+            "姓名" => searchDto.Order == Enums.Order.Desc ? query.OrderByDescending(x => x.姓名) : query.OrderBy(x => x.姓名),
+            "Email" => searchDto.Order == Enums.Order.Desc ? query.OrderByDescending(x => x.Email) : query.OrderBy(x => x.Email),
+            "職稱" => searchDto.Order == Enums.Order.Desc ? query.OrderByDescending(x => x.職稱) : query.OrderBy(x => x.職稱),
+            _ => searchDto.Order == Enums.Order.Desc ? query.OrderByDescending(x => x.Id) : query.OrderBy(x => x.Id)
         };
 
         return query;

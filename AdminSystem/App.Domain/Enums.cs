@@ -9,10 +9,15 @@
             黑名單
         }
 
+        public enum Shared {
+            _Table,
+            _Pagination
+        }
+
         public enum Order
         {
-            asc,
-            desc
+            Asc,
+            Desc
         }
 
         public enum Role

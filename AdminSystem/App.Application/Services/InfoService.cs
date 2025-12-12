@@ -37,7 +37,7 @@ public class InfoService : IInfoService
 
         query = searchDto.Order switch
         {
-            Enums.Order.desc => query.OrderByDescending(x => x.Id),
+            Enums.Order.Desc => query.OrderByDescending(x => x.Id),
             _ => query.OrderBy(x => x.Id)
         };
 

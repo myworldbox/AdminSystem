@@ -8,7 +8,7 @@
 
 @{
     var search = Model.SearchDto;
-    var nextOrder = (search.Order == Order.asc ? Order.desc : Order.asc).ToString();
+    var nextOrder = (search.Order == Order.Asc ? Order.Desc : Order.Asc).ToString();
 
     dynamic dyn = Model;
     IEnumerable<object> items = dyn.Items;   // 泛型 Items 轉成 object 集合
@@ -126,6 +126,6 @@
                 </tbody>
             </table>
         </div>
-        @await Html.PartialAsync("_Pagination", Model)
+        @await Html.PartialAsync(nameof(Shared._Pagination), Model)
     </div>
 </div>

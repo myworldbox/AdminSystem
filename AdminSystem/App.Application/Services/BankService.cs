@@ -37,10 +37,10 @@ public class BankService : IBankService
 
         query = searchDto.OrderName switch
         {
-            "銀行名稱" => searchDto.Order == Enums.Order.desc ? query.OrderByDescending(x => x.銀行名稱) : query.OrderBy(x => x.銀行名稱),
-            "銀行代碼" => searchDto.Order == Enums.Order.desc ? query.OrderByDescending(x => x.銀行代碼) : query.OrderBy(x => x.銀行代碼),
-            "帳戶名稱" => searchDto.Order == Enums.Order.desc ? query.OrderByDescending(x => x.帳戶名稱) : query.OrderBy(x => x.帳戶名稱),
-            _ => searchDto.Order == Enums.Order.desc ? query.OrderByDescending(x => x.Id) : query.OrderBy(x => x.Id)
+            "銀行名稱" => searchDto.Order == Enums.Order.Desc ? query.OrderByDescending(x => x.銀行名稱) : query.OrderBy(x => x.銀行名稱),
+            "銀行代碼" => searchDto.Order == Enums.Order.Desc ? query.OrderByDescending(x => x.銀行代碼) : query.OrderBy(x => x.銀行代碼),
+            "帳戶名稱" => searchDto.Order == Enums.Order.Desc ? query.OrderByDescending(x => x.帳戶名稱) : query.OrderBy(x => x.帳戶名稱),
+            _ => searchDto.Order == Enums.Order.Desc ? query.OrderByDescending(x => x.Id) : query.OrderBy(x => x.Id)
         };
 
         return query;

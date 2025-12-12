@@ -8,7 +8,7 @@ namespace AdminSystem.Application.Dtos
     public record SearchDto(
         string? SearchTerm = null,
         string OrderName = "Id",
-        Enums.Order Order = Enums.Order.asc,
+        Enums.Order Order = Enums.Order.Asc,
         int Page = 1,
         int PageSize = 5
     );
