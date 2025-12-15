@@ -1,4 +1,5 @@
-﻿using AdminSystem.App.Infrastructure.Interfaces;
+﻿using AdminSystem.App.Application.Interfaces;
+using AdminSystem.App.Infrastructure.Interfaces;
 using AdminSystem.Application.Dtos;
 using AdminSystem.Application.ViewModels;
 using AdminSystem.Domain;

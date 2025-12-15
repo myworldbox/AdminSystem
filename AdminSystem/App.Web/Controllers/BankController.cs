@@ -1,4 +1,4 @@
-﻿using AdminSystem.App.Application.Services;
+﻿using AdminSystem.App.Application.Interfaces;
 using AdminSystem.Application.Dtos;
 using AdminSystem.Application.ViewModels;
 using AdminSystem.Web.Controllers;

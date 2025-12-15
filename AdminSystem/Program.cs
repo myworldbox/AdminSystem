@@ -1,4 +1,5 @@
 using AdminSystem.App.Application.Common;
+using AdminSystem.App.Application.Interfaces;
 using AdminSystem.App.Application.Services;
 using AdminSystem.App.Infrastructure;
 using AdminSystem.App.Infrastructure.Data;

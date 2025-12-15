@@ -1,4 +1,4 @@
-﻿using AdminSystem.App.Application.Services;
+﻿using AdminSystem.App.Application.Interfaces;
 using AdminSystem.Application.ViewModels;
 using AdminSystem.Infrastructure.Data;
 using AutoMapper;
