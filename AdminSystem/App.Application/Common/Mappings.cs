@@ -2,11 +2,11 @@
 using AdminSystem.Domain.Entities;
 using AdminSystem.Application.ViewModels;
 
-namespace AdminSystem.Application.Helpers;
+namespace AdminSystem.App.Application.Common;
 
-public class MappingHelper : Profile
+public class Mappings : Profile
 {
-    public MappingHelper()
+    public Mappings()
     {
         CreateMap<客戶資料, InfoViewModel>().ReverseMap();
 

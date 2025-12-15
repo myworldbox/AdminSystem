@@ -1,13 +1,13 @@
-﻿using AdminSystem.Application.Dtos;
+﻿using AdminSystem.App.Domain.Interfaces;
+using AdminSystem.Application.Dtos;
 using AdminSystem.Application.ViewModels;
 using AdminSystem.Domain;
 using AdminSystem.Domain.Entities;
-using AdminSystem.Infrastructure.Repositories;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
-namespace AdminSystem.Application.Services;
+namespace AdminSystem.App.Application.Services;
 
 public class ContactService : IContactService
 {
@@ -30,9 +30,9 @@ public class ContactService : IContactService
             query = query.Where(c =>
                 c.姓名.Contains(term) ||
                 c.Email.Contains(term) ||
-                (c.職稱 != null && c.職稱.Contains(term)) ||
-                (c.手機 != null && c.手機.Contains(term)) ||
-                (c.電話 != null && c.電話.Contains(term)));
+                c.職稱 != null && c.職稱.Contains(term) ||
+                c.手機 != null && c.手機.Contains(term) ||
+                c.電話 != null && c.電話.Contains(term));
         }
 
         query = searchDto.OrderName switch

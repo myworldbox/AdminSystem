@@ -6,7 +6,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace AdminSystem.Infrastructure.Repositories;
+namespace AdminSystem.App.Domain.Interfaces;
 
 public interface IRepository<TEntity> where TEntity : class
 {

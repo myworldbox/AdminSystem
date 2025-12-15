@@ -2,7 +2,7 @@
 using AdminSystem.Application.ViewModels;
 using AdminSystem.Domain.Entities;
 
-namespace AdminSystem.Application.Services;
+namespace AdminSystem.App.Application.Services;
 
 public interface IBankService
 {

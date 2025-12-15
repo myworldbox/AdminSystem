@@ -1,4 +1,4 @@
-using AdminSystem.Application.Validators;
+using AdminSystem.App.Application.Common.Validators;
 using AdminSystem.Domain;
 using AutoMapper.Configuration.Annotations;
 using Microsoft.AspNetCore.Mvc.Rendering;

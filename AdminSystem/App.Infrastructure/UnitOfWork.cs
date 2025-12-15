@@ -1,12 +1,14 @@
 ﻿// File: Infrastructure/Repositories/UnitOfWork.cs
 
+using AdminSystem.App.Domain.Interfaces;
 using AdminSystem.Domain.Entities;
 using AdminSystem.Infrastructure.Data;
+using AdminSystem.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading.Tasks;
 
-namespace AdminSystem.Infrastructure.Repositories;
+namespace AdminSystem.App.Infrastructure;
 
 public class UnitOfWork : IUnitOfWork, IDisposable, IAsyncDisposable
 {

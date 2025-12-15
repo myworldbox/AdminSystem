@@ -1,6 +1,8 @@
+using AdminSystem.App.Application.Common;
+using AdminSystem.App.Application.Services;
+using AdminSystem.App.Domain.Interfaces;
+using AdminSystem.App.Infrastructure;
 using AdminSystem.App.Infrastructure.Data;
-using AdminSystem.Application.Helpers;
-using AdminSystem.Application.Services;
 using AdminSystem.Application.ViewModels;
 using AdminSystem.Infrastructure.Data;
 using AdminSystem.Infrastructure.Repositories;
@@ -25,8 +27,8 @@ builder.Services.AddControllersWithViews()
     .AddRazorOptions(options =>
     {
         options.ViewLocationFormats.Clear();
-        options.ViewLocationFormats.Add("App.UI/Views/{1}/{0}.cshtml");
-        options.ViewLocationFormats.Add("App.UI/Views/Shared/{0}.cshtml");
+        options.ViewLocationFormats.Add("App.Web/Views/{1}/{0}.cshtml");
+        options.ViewLocationFormats.Add("App.Web/Views/Shared/{0}.cshtml");
     });
 
 var provider = builder.Configuration["AppDbContext"];
@@ -65,7 +67,7 @@ builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddScoped<IBankService, BankService>();
 builder.Services.AddScoped<ISummaryService, SummaryService>();
 
-builder.Services.AddAutoMapper(config => config.AddProfile<MappingHelper>());
+builder.Services.AddAutoMapper(config => config.AddProfile<Mappings>());
 
 var app = builder.Build();
 

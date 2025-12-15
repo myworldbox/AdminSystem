@@ -1,11 +1,11 @@
-﻿using AdminSystem.Application.Dtos;
+﻿using AdminSystem.App.Domain.Interfaces;
+using AdminSystem.Application.Dtos;
 using AdminSystem.Application.ViewModels;
 using AdminSystem.Domain.Entities;
-using AdminSystem.Infrastructure.Repositories;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 
-namespace AdminSystem.Application.Services;
+namespace AdminSystem.App.Application.Services;
 
 public class SummaryService : ISummaryService
 {

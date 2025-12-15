@@ -1,5 +1,6 @@
 ﻿// File: Infrastructure/Repositories/Repository.cs
 
+using AdminSystem.App.Domain.Interfaces;
 using AdminSystem.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System;

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 
-namespace AdminSystem.Application.Validators
+namespace AdminSystem.App.Application.Common.Validators
 {
     public class PhoneFormatAttribute : ValidationAttribute
     {

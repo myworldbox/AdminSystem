@@ -1,6 +1,6 @@
+using AdminSystem.App.Domain.Interfaces;
 using AdminSystem.Application.ViewModels;
 using AdminSystem.Domain.Entities;
-using AdminSystem.Infrastructure.Repositories;
 using System.ComponentModel.DataAnnotations;
 
 public class UniqueEmailAttribute : ValidationAttribute
