@@ -1,6 +1,6 @@
 ﻿// File: Infrastructure/Repositories/UnitOfWork.cs
 
-using AdminSystem.App.Domain.Interfaces;
+using AdminSystem.App.Infrastructure.Interfaces;
 using AdminSystem.Domain.Entities;
 using AdminSystem.Infrastructure.Data;
 using AdminSystem.Infrastructure.Repositories;

@@ -1,4 +1,4 @@
-using AdminSystem.App.Domain.Interfaces;
+using AdminSystem.App.Infrastructure.Interfaces;
 using AdminSystem.Application.ViewModels;
 using AdminSystem.Domain.Entities;
 using System.ComponentModel.DataAnnotations;

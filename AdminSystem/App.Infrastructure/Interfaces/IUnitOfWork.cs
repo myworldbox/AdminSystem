@@ -1,6 +1,6 @@
 ﻿using AdminSystem.Domain.Entities;
 
-namespace AdminSystem.App.Domain.Interfaces
+namespace AdminSystem.App.Infrastructure.Interfaces
 {
     public interface IUnitOfWork : IDisposable
     {

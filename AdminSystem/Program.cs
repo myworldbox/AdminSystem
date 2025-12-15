@@ -1,8 +1,8 @@
 using AdminSystem.App.Application.Common;
 using AdminSystem.App.Application.Services;
-using AdminSystem.App.Domain.Interfaces;
 using AdminSystem.App.Infrastructure;
 using AdminSystem.App.Infrastructure.Data;
+using AdminSystem.App.Infrastructure.Interfaces;
 using AdminSystem.Application.ViewModels;
 using AdminSystem.Infrastructure.Data;
 using AdminSystem.Infrastructure.Repositories;
