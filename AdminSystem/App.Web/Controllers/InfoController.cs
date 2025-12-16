@@ -6,15 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AdminSystem.Web.Controllers;
 
-public class InfoController : Controller
+public class InfoController(IInfoService _infoService) : Controller
 {
-    private readonly IInfoService _infoService;
-
-    public InfoController(IInfoService infoService)
-    {
-        _infoService = infoService;
-    }
-
     public async Task<IActionResult> Index(SearchDto searchDto)
     {
         var result = await _infoService.GetPagedAsync(searchDto);

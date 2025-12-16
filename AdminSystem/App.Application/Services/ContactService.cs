@@ -7,6 +7,7 @@ using AdminSystem.Domain.Entities;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace AdminSystem.App.Application.Services;
 
@@ -25,27 +26,34 @@ public class ContactService : IContactService
     {
         var query = _unitOfWork.Contacts.Get();
 
-        if (!string.IsNullOrEmpty(searchDto.SearchTerm))
+        if (!string.IsNullOrWhiteSpace(searchDto.SearchTerm))
         {
-            var term = searchDto.SearchTerm.ToUpper();
+            var term = searchDto.SearchTerm;
             query = query.Where(c =>
                 c.姓名.Contains(term) ||
                 c.Email.Contains(term) ||
-                c.職稱 != null && c.職稱.Contains(term) ||
-                c.手機 != null && c.手機.Contains(term) ||
-                c.電話 != null && c.電話.Contains(term));
+                c.職稱.Contains(term) ||
+                c.手機!.Contains(term) ||
+                c.電話!.Contains(term));
         }
 
-        query = searchDto.OrderName switch
+        Expression<Func<客戶聯絡人, object>> orderExpr = searchDto.OrderName switch
         {
-            "姓名" => searchDto.Order == Enums.Order.Desc ? query.OrderByDescending(x => x.姓名) : query.OrderBy(x => x.姓名),
-            "Email" => searchDto.Order == Enums.Order.Desc ? query.OrderByDescending(x => x.Email) : query.OrderBy(x => x.Email),
-            "職稱" => searchDto.Order == Enums.Order.Desc ? query.OrderByDescending(x => x.職稱) : query.OrderBy(x => x.職稱),
-            _ => searchDto.Order == Enums.Order.Desc ? query.OrderByDescending(x => x.Id) : query.OrderBy(x => x.Id)
+            nameof(客戶聯絡人.姓名) => c => c.姓名,
+            nameof(客戶聯絡人.Email) => c => c.Email,
+            nameof(客戶聯絡人.職稱) => c => c.職稱,
+            nameof(客戶聯絡人.手機) => c => c.手機!,
+            nameof(客戶聯絡人.電話) => c => c.電話!,
+            _ => c => c.Id
         };
+
+        query = searchDto.Order == Enums.Order.Desc
+            ? query.OrderByDescending(orderExpr)
+            : query.OrderBy(orderExpr);
 
         return query;
     }
+
 
     public async Task<PagedResultDto<ContactViewModel>> GetPagedAsync(SearchDto searchDto)
     {
@@ -112,8 +120,8 @@ public class ContactService : IContactService
         {
             yield return new 客戶聯絡人
             {
-                客戶 = entity.客戶,
                 客戶Id = entity.客戶Id,
+                客戶 = entity.客戶,
                 職稱 = entity.職稱,
                 姓名 = entity.姓名,
                 Email = entity.Email,

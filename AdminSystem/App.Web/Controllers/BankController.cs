@@ -5,15 +5,8 @@ using AdminSystem.Web.Controllers;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 
-public class BankController : Controller
+public class BankController(IBankService _bankService) : Controller
 {
-    private readonly IBankService _bankService;
-
-    public BankController(IBankService bankService)
-    {
-        _bankService = bankService;
-    }
-
     public async Task<IActionResult> Index(SearchDto searchDto)
     {
         var result = await _bankService.GetPagedAsync(searchDto);

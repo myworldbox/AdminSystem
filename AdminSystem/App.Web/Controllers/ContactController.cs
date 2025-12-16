@@ -6,15 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AdminSystem.Web.Controllers;
 
-public class ContactController : Controller
+public class ContactController(IContactService _contactService) : Controller
 {
-    private readonly IContactService _contactService;
-
-    public ContactController(IContactService contactService)
-    {
-        _contactService = contactService;
-    }
-
     public async Task<IActionResult> Index(SearchDto searchDto)
     {
         var result = await _contactService.GetPagedAsync(searchDto);

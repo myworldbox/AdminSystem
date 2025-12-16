@@ -7,6 +7,7 @@ using AdminSystem.Domain.Entities;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace AdminSystem.App.Application.Services;
 
@@ -31,18 +32,24 @@ public class BankService : IBankService
             query = query.Where(b =>
                 b.銀行名稱.Contains(term) ||
                 b.銀行代碼.ToString().Contains(term) ||
-                b.分行代碼.ToString().Contains(term) ||
+                b.分行代碼.ToString()!.Contains(term) ||
                 b.帳戶名稱.Contains(term) ||
                 b.帳戶號碼.Contains(term));
         }
 
-        query = searchDto.OrderName switch
+        Expression<Func<客戶銀行資訊, object>> orderExpr = searchDto.OrderName switch
         {
-            "銀行名稱" => searchDto.Order == Enums.Order.Desc ? query.OrderByDescending(x => x.銀行名稱) : query.OrderBy(x => x.銀行名稱),
-            "銀行代碼" => searchDto.Order == Enums.Order.Desc ? query.OrderByDescending(x => x.銀行代碼) : query.OrderBy(x => x.銀行代碼),
-            "帳戶名稱" => searchDto.Order == Enums.Order.Desc ? query.OrderByDescending(x => x.帳戶名稱) : query.OrderBy(x => x.帳戶名稱),
-            _ => searchDto.Order == Enums.Order.Desc ? query.OrderByDescending(x => x.Id) : query.OrderBy(x => x.Id)
+            nameof(客戶銀行資訊.銀行名稱) => c => c.銀行名稱,
+            nameof(客戶銀行資訊.銀行代碼) => c => c.銀行代碼,
+            nameof(客戶銀行資訊.分行代碼) => c => c.分行代碼!,
+            nameof(客戶銀行資訊.帳戶名稱) => c => c.帳戶名稱,
+            nameof(客戶銀行資訊.帳戶號碼) => c => c.帳戶號碼,
+            _ => c => c.Id
         };
+
+        query = searchDto.Order == Enums.Order.Desc
+            ? query.OrderByDescending(orderExpr)
+            : query.OrderBy(orderExpr);
 
         return query;
     }

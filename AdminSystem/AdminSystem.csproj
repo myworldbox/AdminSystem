@@ -93,4 +93,8 @@
     <None Include="wwwroot\lib\jquery\LICENSE.txt" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="App.Web\Metadata\" />
+  </ItemGroup>
+
 </Project>

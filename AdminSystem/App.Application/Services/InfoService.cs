@@ -7,6 +7,7 @@ using AdminSystem.Domain.Entities;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace AdminSystem.App.Application.Services;
 
@@ -32,15 +33,23 @@ public class InfoService : IInfoService
                 c.客戶名稱.Contains(term) ||
                 c.統一編號.Contains(term) ||
                 c.電話.Contains(term) ||
-                c.地址.Contains(term) ||
-                c.Email.Contains(term));
+                c.地址!.Contains(term) ||
+                c.Email!.Contains(term));
         }
 
-        query = searchDto.Order switch
+        Expression<Func<客戶資料, object>> orderExpr = searchDto.OrderName switch
         {
-            Enums.Order.Desc => query.OrderByDescending(x => x.Id),
-            _ => query.OrderBy(x => x.Id)
+            nameof(客戶資料.客戶名稱) => c => c.客戶名稱,
+            nameof(客戶資料.統一編號) => c => c.統一編號,
+            nameof(客戶資料.電話) => c => c.電話,
+            nameof(客戶資料.地址) => c => c.地址!,
+            nameof(客戶資料.Email) => c => c.Email!,
+            _ => c => c.Id
         };
+
+        query = searchDto.Order == Enums.Order.Desc
+            ? query.OrderByDescending(orderExpr)
+            : query.OrderBy(orderExpr);
 
         return query;
     }
