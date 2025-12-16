@@ -33,8 +33,10 @@ public class InfoService : IInfoService
                 c.客戶名稱.Contains(term) ||
                 c.統一編號.Contains(term) ||
                 c.電話.Contains(term) ||
+                c.傳真!.Contains(term) ||
                 c.地址!.Contains(term) ||
-                c.Email!.Contains(term));
+                c.Email!.Contains(term) ||
+                c.客戶分類!.Contains(term));
         }
 
         Expression<Func<客戶資料, object>> orderExpr = searchDto.OrderName switch
@@ -42,8 +44,10 @@ public class InfoService : IInfoService
             nameof(客戶資料.客戶名稱) => c => c.客戶名稱,
             nameof(客戶資料.統一編號) => c => c.統一編號,
             nameof(客戶資料.電話) => c => c.電話,
+            nameof(客戶資料.傳真) => c => c.傳真!,
             nameof(客戶資料.地址) => c => c.地址!,
             nameof(客戶資料.Email) => c => c.Email!,
+            nameof(客戶資料.客戶分類) => c => c.客戶分類!,
             _ => c => c.Id
         };
 

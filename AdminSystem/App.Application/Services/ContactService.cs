@@ -24,24 +24,26 @@ public class ContactService : IContactService
 
     private IQueryable<客戶聯絡人> GetBaseQuery(SearchDto searchDto)
     {
-        var query = _unitOfWork.Contacts.Get();
+        var query = _unitOfWork.Contacts.Get().Include(b => b.客戶).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(searchDto.SearchTerm))
         {
             var term = searchDto.SearchTerm;
             query = query.Where(c =>
+                c.客戶.客戶名稱.Contains(term) ||
+                c.職稱.Contains(term) ||
                 c.姓名.Contains(term) ||
                 c.Email.Contains(term) ||
-                c.職稱.Contains(term) ||
                 c.手機!.Contains(term) ||
                 c.電話!.Contains(term));
         }
 
         Expression<Func<客戶聯絡人, object>> orderExpr = searchDto.OrderName switch
         {
+            nameof(客戶資料.客戶名稱) => c => c.客戶.客戶名稱,
+            nameof(客戶聯絡人.職稱) => c => c.職稱,
             nameof(客戶聯絡人.姓名) => c => c.姓名,
             nameof(客戶聯絡人.Email) => c => c.Email,
-            nameof(客戶聯絡人.職稱) => c => c.職稱,
             nameof(客戶聯絡人.手機) => c => c.手機!,
             nameof(客戶聯絡人.電話) => c => c.電話!,
             _ => c => c.Id
@@ -114,7 +116,7 @@ public class ContactService : IContactService
 
     public async IAsyncEnumerable<客戶聯絡人> GetAllForExport(SearchDto searchDto)
     {
-        var query = GetBaseQuery(searchDto).Include(b => b.客戶);
+        var query = GetBaseQuery(searchDto);
 
         await foreach (var entity in query.AsAsyncEnumerable())
         {

@@ -24,12 +24,13 @@ public class BankService : IBankService
 
     private IQueryable<客戶銀行資訊> GetBaseQuery(SearchDto searchDto)
     {
-        var query = _unitOfWork.Banks.Get();
+        var query = _unitOfWork.Banks.Get().Include(b => b.客戶).AsQueryable();
 
         if (!string.IsNullOrEmpty(searchDto.SearchTerm))
         {
             var term = searchDto.SearchTerm.ToUpper();
             query = query.Where(b =>
+                b.客戶.客戶名稱.Contains(term) ||
                 b.銀行名稱.Contains(term) ||
                 b.銀行代碼.ToString().Contains(term) ||
                 b.分行代碼.ToString()!.Contains(term) ||
@@ -113,7 +114,7 @@ public class BankService : IBankService
 
     public async IAsyncEnumerable<客戶銀行資訊> GetAllForExport(SearchDto searchDto)
     {
-        var query = GetBaseQuery(searchDto).Include(b => b.客戶);
+        var query = GetBaseQuery(searchDto);
 
         await foreach (var entity in query.AsAsyncEnumerable())
         {

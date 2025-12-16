@@ -1,5 +1,6 @@
 using AdminSystem.App.Application.Common.Validators;
 using AdminSystem.Domain;
+using AdminSystem.Domain.Entities;
 using AutoMapper.Configuration.Annotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Collections.Generic;
@@ -7,7 +8,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AdminSystem.Application.ViewModels
 {
-    public record InfoViewModel
+    public class InfoViewModel
     {
         public int Id { get; set; }
         [Required(ErrorMessage = "必填")]
