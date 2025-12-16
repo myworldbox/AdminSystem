@@ -40,6 +40,7 @@ public class BankService : IBankService
 
         Expression<Func<客戶銀行資訊, object>> orderExpr = searchDto.OrderName switch
         {
+            nameof(客戶資料.客戶名稱) => c => c.客戶.客戶名稱,
             nameof(客戶銀行資訊.銀行名稱) => c => c.銀行名稱,
             nameof(客戶銀行資訊.銀行代碼) => c => c.銀行代碼,
             nameof(客戶銀行資訊.分行代碼) => c => c.分行代碼!,
