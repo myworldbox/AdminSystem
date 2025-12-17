@@ -17,7 +17,7 @@
     var baseRoute = new Dictionary<string, string>
     {
         { "SearchTerm", Model.SearchDto.SearchTerm ?? "" },
-        { "OrderName", "" },
+        { "OrderName", Model.SearchDto.OrderName ?? "" },
         { "Order", Model.SearchDto.Order.ToString() }
     };
 }
