@@ -70,6 +70,19 @@ builder.Services.AddScoped<ISummaryService, SummaryService>();
 
 builder.Services.AddAutoMapper(config => config.AddProfile<Mappings>());
 
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var supportedCultures = new[] { "zh-HK", "zh-CN", "en-US" }
+        .Select(c => new CultureInfo(c))
+        .ToList();
+
+    options.DefaultRequestCulture = new RequestCulture("en-US");
+    options.SupportedCultures = supportedCultures;
+    options.SupportedUICultures = supportedCultures;
+});
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -77,16 +90,6 @@ using (var scope = app.Services.CreateScope())
     var seeder = scope.ServiceProvider.GetRequiredService<MockDataSeed>();
     await seeder.SeedAsync();
 }
-
-var defaultCulture = new CultureInfo("zh-CN"); // ©Î "zh-TW"
-var localizationOptions = new RequestLocalizationOptions
-{
-    DefaultRequestCulture = new RequestCulture(defaultCulture),
-    SupportedCultures = new List<CultureInfo> { defaultCulture },
-    SupportedUICultures = new List<CultureInfo> { defaultCulture }
-};
-
-app.UseRequestLocalization(localizationOptions);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

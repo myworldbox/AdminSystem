@@ -8,6 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="Resources\Locale.en-US.resx" />
+    <Content Include="Resources\Locale.zh-CN.resx" />
+    <Content Include="Resources\Locale.zh-HK.resx" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="15.0.1" />
     <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.3" />

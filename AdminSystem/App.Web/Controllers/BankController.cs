@@ -1,17 +1,19 @@
 ﻿using AdminSystem.App.Application.Interfaces;
+using AdminSystem.App.SharedKernel.Localization;
 using AdminSystem.Application.Dtos;
 using AdminSystem.Application.ViewModels;
 using AdminSystem.Web.Controllers;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
-public class BankController(IBankService _bankService) : Controller
+public class BankController(IStringLocalizer<Locale> _localizer, IBankService _bankService) : Controller
 {
     public async Task<IActionResult> Index(SearchDto searchDto)
     {
         var result = await _bankService.GetPagedAsync(searchDto);
 
-        ViewData["Title"] = "客戶銀行帳戶管理";
+        ViewData["Title"] = _localizer["bank.title"];
 
         return View(result);
     }
