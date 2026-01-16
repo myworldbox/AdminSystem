@@ -77,7 +77,7 @@ public class BankService : IBankService
     }
 
     public Task<BankViewModel?> GetByIdAsync(int id)
-        => _unitOfWork.Banks.GetByIdAsync(id)
+        => _unitOfWork.Banks.Queryable().Include(b => b.客戶).FirstOrDefaultAsync(x => x.Id == id)
             .ContinueWith(t => t.Result == null ? null : _mapper.Map<BankViewModel>(t.Result));
 
     public async Task<BankViewModel> GetForCreateAsync()
@@ -85,8 +85,7 @@ public class BankService : IBankService
 
     public async Task<BankViewModel> GetForEditAsync(int id)
     {
-        var entity = await _unitOfWork.Banks.GetByIdAsync(id)
-                     ?? throw new KeyNotFoundException($"銀行資訊 Id {id} 不存在");
+        var entity = await GetByIdAsync(id);
 
         var vm = _mapper.Map<BankViewModel>(entity);
         vm.dropdown = await PopulateDropdownAsync();

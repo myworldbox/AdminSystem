@@ -10,6 +10,7 @@ namespace AdminSystem.App.Infrastructure.Interfaces;
 
 public interface IRepository<TEntity> where TEntity : class
 {
+    IQueryable<TEntity> Queryable();
     /// <summary>
     /// 取得資料（自動排除已軟刪除的資料 + AsNoTracking）
     /// </summary>

@@ -22,6 +22,8 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : class
         DbSet = context.Set<TEntity>();
     }
 
+    public virtual IQueryable<TEntity> Queryable() => DbSet.AsQueryable();
+
     public virtual IQueryable<TEntity> Get(
         Expression<Func<TEntity, bool>>? filter = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,

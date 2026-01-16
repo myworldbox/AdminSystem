@@ -6,13 +6,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AdminSystem.Application.ViewModels
 {
-    public class BankViewModel
+    public class BankViewModel : IValidatableObject
     {
         public int Id { get; set; }
         [ForeignKey("客戶資料")]
         [Ignore]
         public int 客戶Id { get; set; }
-        public new string 客戶名稱 => 客戶.客戶名稱;
+        public new string? 客戶名稱 => 客戶?.客戶名稱;
         [Required(ErrorMessage = "必填")]
         [StringLength(50)]
         public string 銀行名稱 { get; set; }
@@ -31,9 +31,35 @@ namespace AdminSystem.Application.ViewModels
         [Ignore]
         public bool 是否已刪除 { get; set; }
         [Ignore]
-        public virtual 客戶資料 客戶 { get; set; }
+        public virtual 客戶資料? 客戶 { get; set; }
         [Ignore]
         public BankDropdown? dropdown { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            var errors = new List<ValidationResult>();
+
+            // Example: 分行代碼 must be provided if 銀行代碼 is 123
+            if (銀行代碼 == 123 && !分行代碼.HasValue)
+            {
+                errors.Add(new ValidationResult(
+                    "分行代碼必填，當銀行代碼為 123 時",
+                    new[] { nameof(分行代碼) }
+                ));
+            }
+
+            // Example: 帳戶名稱 must not equal 銀行名稱
+            if (!string.IsNullOrEmpty(帳戶名稱) && 帳戶名稱 == 銀行名稱)
+            {
+                errors.Add(new ValidationResult(
+                    "帳戶名稱不能與銀行名稱相同",
+                    new[] { nameof(帳戶名稱) }
+                ));
+            }
+
+            return errors;
+        }
+
     }
 
     public record BankDropdown
